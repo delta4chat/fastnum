@@ -6,6 +6,9 @@ use crate::decimal::{
 type D<const N: usize> = Decimal<N>;
 
 #[inline]
-pub(crate) const fn acos<const N: usize>(x: D<N>) -> D<N> {
-    sub(Consts::FRAC_PI_2, asin(x))
+pub(crate) const fn acos<const N: usize>(x: &mut D<N>) -> &mut D<N> {
+    asin(x);
+    let ax = *x; // asin x
+    *x = Consts::FRAC_PI_2;
+    x.sub_assign(&ax)
 }

@@ -27,7 +27,20 @@ macro_rules! consts_impl {
             /// [Machine epsilon]: https://en.wikipedia.org/wiki/Machine_epsilon
             pub const EPSILON: Self = Self::new(UInt::ONE, ControlBlock::basic(Intrinsics::<N>::MAX_CLENGTH as i16 - 1, Sign::Plus));
 
-            consts_impl!(CONSTS ZERO 0, ONE 1, TWO 2, THREE 3, FOUR 4, FIVE 5, SIX 6, SEVEN 7, EIGHT 8, NINE 9, TEN 10);
+            consts_impl!(CONSTS
+                ZERO 0,
+                ONE 1, NEG_ONE -1,
+                TWO 2, NEG_TWO -2,
+                THREE 3, NEG_THREE -3,
+                FOUR 4, NEG_FOUR -4,
+                FIVE 5, NEG_FIVE -5,
+                SIX 6, NEG_SIX -6,
+                SEVEN 7, NEG_SEVEN -7,
+                EIGHT 8, NEG_EIGHT -8,
+                NINE 9, NEG_NINE -9,
+                TEN 10, NEG_TEN -10,
+            );
+            pub const NEG_ZERO: Self = Self::ZERO.neg();
 
             /// The value of `0.5` represented by this decimal type.
             pub const HALF: Self = Self::new(UInt::from_digit(5), ControlBlock::basic(1, Sign::Plus));
@@ -95,7 +108,7 @@ macro_rules! consts_impl {
     (CONSTS $($name: ident $num: literal), *) => {
         $(
             #[doc = concat!("The value of `", $num, "` represented by this decimal type.")]
-            pub const $name: Self = Self::new(UInt::$name, ControlBlock::basic(0, Sign::Plus));
+            pub const $name: Self = Self::from_i8($num);
         )*
     }
 }

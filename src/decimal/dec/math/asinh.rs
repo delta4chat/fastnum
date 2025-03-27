@@ -6,6 +6,11 @@ use crate::decimal::{
 type D<const N: usize> = Decimal<N>;
 
 #[inline]
-pub(crate) const fn asinh<const N: usize>(x: D<N>) -> D<N> {
-    ln(add(x, sqrt(add(D::ONE, mul(x, x)))))
+pub(crate) const fn asinh<const N: usize>(x: &mut D<N>) -> &mut D<N> {
+    let ox = *x; // original x
+    x.mul_assign(&ox)
+     .add_assign(&D::ONE)
+     .sqrt_assign()
+     .add_assign(&ox)
+     .ln_assign()
 }

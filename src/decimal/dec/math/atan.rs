@@ -8,37 +8,48 @@ use crate::decimal::{
 type D<const N: usize> = Decimal<N>;
 
 #[inline]
-pub(crate) const fn atan<const N: usize>(x: D<N>) -> D<N> {
+pub(crate) const fn atan<const N: usize>(x: &mut D<N>) -> &mut D<N> {
     if x.is_nan() {
         return x.op_invalid();
     }
 
     if x.is_zero() {
-        return D::ZERO.with_ctx(x.context());
+        let ctx = x.context();
+        *x = D::ZERO;
+        return x.set_ctx(ctx);
     }
 
     if x.is_infinite() {
         return x.signaling_nan();
     }
 
-    match x.cmp(&D::ONE.neg()) {
+    match x.cmp(&D::NEG_ONE) {
         Ordering::Less => {
             return x.signaling_nan();
         }
-        Ordering::Equal => return Consts::FRAC_PI_4.neg(),
+        Ordering::Equal => {
+            *x = Consts::FRAC_PI_4;
+            return x.neg();
+        }
         Ordering::Greater => {}
     }
 
     match x.cmp(&D::ONE) {
         Ordering::Less => {}
         Ordering::Equal => {
-            return Consts::FRAC_PI_4;
+            *x = Consts::FRAC_PI_4;
+            return x;
         }
         Ordering::Greater => {
             return x.signaling_nan();
         }
     }
 
-    let x2 = mul(x, x);
-    asin(div(x, sqrt(add(x2, D::<N>::ONE))))
+    let mut y = *x;
+    y.mul_assign(&x)
+     .add_assign(&D::ONE)
+     .sqrt_assign();
+
+    x.div_assign(&y)
+     .asin_assign()
 }

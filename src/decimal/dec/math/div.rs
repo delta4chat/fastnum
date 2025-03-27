@@ -19,13 +19,16 @@ type D<const N: usize> = Decimal<N>;
 type U<const N: usize> = UInt<N>;
 
 #[inline]
-pub(crate) const fn div<const N: usize>(mut dividend: D<N>, mut divisor: D<N>) -> D<N> {
+pub(crate) const fn div<const N: usize>(dividend: &mut D<N>, divisor: &D<N>) -> &mut D<N> {
     if dividend.is_nan() {
-        return dividend.compound(&divisor).op_invalid();
+        return dividend.compound(divisor).op_invalid();
     }
 
     if divisor.is_nan() {
-        return divisor.compound(&dividend).op_invalid();
+        let mut result = *divisor;
+        result.compound(&dividend).op_invalid();
+        *dividend = result;
+        return dividend;
     }
 
     let sign = dividend.sign().div(divisor.sign());
@@ -33,36 +36,45 @@ pub(crate) const fn div<const N: usize>(mut dividend: D<N>, mut divisor: D<N>) -
     let ctx = Context::merge(dividend.cb.get_context(), divisor.cb.get_context());
 
     if dividend.is_infinite() && divisor.is_infinite() {
-        return D::SIGNALING_NAN.raise_signals(signals).set_ctx(ctx);
+        *dividend = D::SIGNALING_NAN;
+        return dividend.raise_signals(signals).set_ctx(ctx);
     }
 
     if divisor.is_zero() {
-        D::INFINITY
+        *dividend = D::INFINITY;
+
+        dividend
             .raise_signals(signals)
             .set_ctx(ctx)
             .set_sign(sign)
             .raise_signals(Signals::OP_DIV_BY_ZERO)
             .op_invalid()
     } else if dividend.is_zero() || divisor.is_one() {
-        dividend.compound(&divisor).set_sign(sign)
+        dividend.compound(divisor).set_sign(sign)
     } else if dividend.is_infinite() {
-        D::INFINITY
-            .raise_signals(signals)
-            .set_ctx(ctx)
-            .set_sign(sign)
+        *dividend = D::INFINITY;
+
+        dividend.raise_signals(signals)
+                .set_ctx(ctx)
+                .set_sign(sign)
     } else if divisor.is_infinite() {
-        D::ZERO.raise_signals(signals).set_ctx(ctx).set_sign(sign)
+        *dividend = D::ZERO;
+
+        dividend.raise_signals(signals)
+                .set_ctx(ctx)
+                .set_sign(sign)
     } else {
+        let mut divisor = *divisor;
         let correction = div_correction(&mut dividend, &mut divisor);
 
         let mut exp = dividend.cb.get_exponent() - divisor.cb.get_exponent();
         let (mut digits, mut remainder) = div_rem(dividend.digits, divisor.digits);
 
-        if !remainder.is_zero() {
+        if ! remainder.is_zero() {
             let mut quotient;
             let mut digits_prev;
 
-            while !remainder.is_zero() {
+            while ! remainder.is_zero() {
                 (quotient, remainder) = div_rem_next(remainder, divisor.digits);
 
                 if digits.gt(&Intrinsics::<N>::COEFF_MEDIUM) {
@@ -202,7 +214,7 @@ const fn div_correction<const N: usize>(dividend: &mut D<N>, divisor: &mut D<N>)
     if xi_dividend.is_zero() && xi_divisor.is_zero() {
         D::ZERO
     } else if xi_divisor.is_zero() {
-        let x = div(xi_dividend, *divisor);
+        let x = xi_dividend.div(&divisor);
 
         if x.is_op_underflow() {
             D::ZERO
@@ -210,22 +222,27 @@ const fn div_correction<const N: usize>(dividend: &mut D<N>, divisor: &mut D<N>)
             x
         }
     } else {
-        let x = if xi_dividend.is_zero() {
-            mul(*dividend, xi_divisor).neg().without_extra_digits()
+        let mut x;
+        if xi_dividend.is_zero() {
+            x = dividend.mul(&xi_divisor);
+            x.neg_assign().without_extra_digits();
         } else {
-            sub(mul(*divisor, xi_dividend), mul(*dividend, xi_divisor)).without_extra_digits()
+            x = divisor.mul(xi_dividend);
+            x.sub_assign(&(dividend.mul(&xi_divisor)))
+             .without_extra_digits();
         };
 
         if x.is_zero() || x.is_op_underflow() {
             D::ZERO
         } else {
-            let y = add(mul(*divisor, *divisor), mul(*divisor, xi_divisor)).without_extra_digits();
-            let z = div(x, y);
+            let mut y = divisor.mul(&divisor);
+            y.add_assign(&(divisor.mul(&xi_divisor))).without_extra_digits();
 
             if z.is_op_underflow() {
                 D::ZERO
             } else {
-                z
+                x.div_assign(&y);
+                x
             }
         }
     }

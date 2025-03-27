@@ -69,15 +69,16 @@ impl<const N: usize> Decimal<N> {
     #[must_use]
     #[inline]
     pub const fn from_parts(digits: UInt<N>, exp: i32, sign: Sign, ctx: Context) -> Self {
-        construct::construct(
+        let mut this = construct::construct(
             digits,
             exp,
             sign,
             Signals::empty(),
             ctx,
             ExtraPrecision::new(),
-        )
-        .check()
+        );
+        this.check();
+        this
     }
 
     /// Creates and initializes decimal from string.
@@ -639,8 +640,9 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn with_ctx(self, ctx: Context) -> Self {
-        self.set_ctx(ctx).check()
+    pub const fn with_ctx(mut self, ctx: Context) -> Self {
+        self.set_ctx(ctx).check();
+        self
     }
 
     /// Apply [RoundingMode] to the given decimal number.
@@ -681,8 +683,9 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn abs(self) -> Self {
-        math::abs::abs(self).check()
+    pub const fn abs(mut self) -> Self {
+        math::abs::abs(&mut self).check();
+        self
     }
 
     /// Get the absolute value of the decimal (non-negative sign) as
@@ -730,7 +733,9 @@ impl<const N: usize> Decimal<N> {
     #[track_caller]
     #[inline]
     pub const fn quantum(exp: i32, ctx: Context) -> Self {
-        scale::quantum(exp, ctx).check()
+        let mut this = scale::quantum(exp, ctx);
+        this.check();
+        this
     }
 
     /// Returns a number that represents the sign of `self`.
@@ -790,8 +795,9 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn reduce(self) -> Self {
-        scale::reduce(self).check()
+    pub const fn reduce(mut self) -> Self {
+        scale::reduce(&mut self).check();
+        self
     }
 
     /// Tests for `self` and `other` values to be equal, and is used by `==`
@@ -825,8 +831,8 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn max(self, other: Self) -> Self {
-        match self.cmp(&other) {
+    pub const fn max(&self, other: &Self) -> &Self {
+        match self.cmp(other) {
             Ordering::Less | Ordering::Equal => other,
             _ => self,
         }
@@ -847,8 +853,8 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn min(self, other: Self) -> Self {
-        match self.cmp(&other) {
+    pub const fn min(&self, other: &Self) -> &Self {
+        match self.cmp(other) {
             Ordering::Less | Ordering::Equal => self,
             _ => other,
         }
@@ -874,11 +880,11 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn clamp(self, min: Self, max: Self) -> Self {
-        assert!(min.le(&max));
-        if let Ordering::Less = self.cmp(&min) {
+    pub const fn clamp(&self, min: &Self, max: &Self) -> &Self {
+        assert!(min.le(max));
+        if self.lt(min) {
             min
-        } else if let Ordering::Greater = self.cmp(&max) {
+        } else if self.gt(max) {
             max
         } else {
             self
@@ -900,11 +906,12 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn abs_sub(self, other: Self) -> Self {
-        if self.le(&other) {
+    pub const fn abs_sub(mut self, other: &Self) -> Self {
+        if self.le(other) {
             Self::ZERO
         } else {
-            math::sub::sub(self, other)
+            math::sub::sub(&mut self, other);
+            self
         }
     }
 
@@ -1050,7 +1057,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn add(self, rhs: Self) -> Self {
+    pub const fn add(mut self, rhs: &Self) -> Self {
+        self.add_assign(rhs);
+        self
+    }
+
+    /// Calculates `self` += `rhs`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn add_assign(&mut self, rhs: &Self) -> &mut Self {
         math::add::add(self, rhs).round_extra_precision().check()
     }
 
@@ -1086,7 +1103,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn sub(self, rhs: Self) -> Self {
+    pub const fn sub(mut self, rhs: &Self) -> Self {
+        self.sub_assign(rhs);
+        self
+    }
+
+    /// Calculates `self` -= `rhs`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn sub_assign(&mut self, rhs: &Self) -> &mut Self {
         math::sub::sub(self, rhs).round_extra_precision().check()
     }
 
@@ -1123,7 +1150,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn mul(self, rhs: Self) -> Self {
+    pub const fn mul(mut self, rhs: &Self) -> Self {
+        self.mul_assign(rhs);
+        self
+    }
+
+    /// Calculates `self` *= `rhs`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn mul_assign(&mut self, rhs: &Self) -> &mut Self {
         math::mul::mul(self, rhs).round_extra_precision().check()
     }
 
@@ -1160,7 +1197,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn div(self, rhs: Self) -> Self {
+    pub const fn div(mut self, rhs: &Self) -> Self {
+        self.div_assign(rhs);
+        self
+    }
+
+    /// Calculates `self` /= `rhs`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn div_assign(&mut self, rhs: &Self) -> &mut Self {
         math::div::div(self, rhs).round_extra_precision().check()
     }
 
@@ -1184,11 +1231,21 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn rem(self, rhs: Self) -> Self {
+    pub const fn rem(mut self, rhs: Self) -> Self {
+        self.rem_assign(rhs);
+        self
+    }
+
+    /// Calculates `self` %= `rhs`.
+    /// 
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn rem_assign(&mut self, rhs: &Self) -> &mut Self {
         math::rem::rem(self, rhs).round_extra_precision().check()
     }
 
-    /// Raise a decimal number to decimal power.
+    /// Raise a decimal number to decimal power (calculates `self` ** `rhs` in other languages).
     ///
     /// Using this function is generally slower than using `powi` for integer
     /// powers or `sqrt` method for `1/2` exponent.
@@ -1210,7 +1267,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn pow(self, n: Self) -> Self {
+    pub const fn pow(mut self, n: &Self) -> Self {
+        self.pow_assign(n);
+        self
+    }
+
+    /// Raise a decimal number to decimal power (calculates `self` **= `rhs` in other languages).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn pow_assign(&mut self, n: &Self) -> &mut Self {
         math::pow::pow(self, n).round_extra_precision().check()
     }
 
@@ -1236,7 +1303,19 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn powi(self, n: i32) -> Self {
+    pub const fn powi(mut self, n: i32) -> Self {
+        self.powi_assign(n);
+        self
+    }
+
+    /// Raise a decimal number to an integer power.
+    ///
+    /// Using this function is generally faster than using `pow_assign`
+    /// 
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn powi_assign(&mut self, n: i32) -> &mut Self {
         math::powi::powi(self, n).round_extra_precision().check()
     }
 
@@ -1266,7 +1345,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn sqrt(self) -> Self {
+    pub const fn sqrt(mut self) -> Self {
+        self.sqrt_assign();
+        self
+    }
+
+    /// Take the square root of the decimal number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn sqrt_assign(&mut self) -> &mut Self {
         math::sqrt::sqrt(self).round_extra_precision().check()
     }
 
@@ -1289,7 +1378,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn cbrt(self) -> Self {
+    pub const fn cbrt(mut self) -> Self {
+        self.cbrt_assign();
+        self
+    }
+
+    /// Take the cubic root of a decimal number using
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn cbrt_assign(&mut self) -> &mut Self {
         math::cbrt::cbrt(self).round_extra_precision().check()
     }
 
@@ -1312,7 +1411,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn nth_root(self, n: u32) -> Self {
+    pub const fn nth_root(mut self, n: u32) -> Self {
+        self.nth_root_assign(n);
+        self
+    }
+
+    /// Take the N-th root of the decimal number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn nth_root_assign(&mut self, n: u32) -> &mut Self {
         math::nth_root::nth_root(self, n)
             .round_extra_precision()
             .check()
@@ -1336,7 +1445,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn exp(self) -> Self {
+    pub const fn exp(mut self) -> Self {
+        self.exp_assign();
+        self
+    }
+
+    /// Returns _e<sup>self</sup>_, (the exponential function).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn exp_assign(&mut self) -> &mut Self {
         math::exp::exp(self).round_extra_precision().check()
     }
 
@@ -1357,7 +1476,16 @@ impl<const N: usize> Decimal<N> {
     /// See more about the [exponential function](crate#exponential-function).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn exp_m1(self) -> Self {
+    pub const fn exp_m1(mut self) -> Self {
+        self.exp_m1_assign();
+        self
+    }
+
+    /// Returns _e<sup>self</sup> – 1_.
+    ///
+    /// this will modify self in-place.
+    #[inline]
+    pub const fn exp_m1_assign(&mut self) -> &mut Self {
         math::exp::exp_m1(self).round_extra_precision().check()
     }
 
@@ -1382,7 +1510,16 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn exp2(self) -> Self {
+    pub const fn exp2(mut self) -> Self {
+        self.exp2_assign();
+    }
+
+    /// Returns _2<sup>self</sup>_, (the binary exponential function).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn exp2_assign(&mut self) -> &mut Self {
         math::exp2::exp2(self).round_extra_precision().check()
     }
 
@@ -1404,7 +1541,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn ln(self) -> Self {
+    pub const fn ln(mut self) -> Self {
+        self.ln_assign();
+        self
+    }
+
+    /// Returns the natural logarithm of the decimal number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn ln_assign(&mut self) -> &mut Self {
         math::ln::ln(self).round_extra_precision().check()
     }
 
@@ -1425,7 +1572,16 @@ impl<const N: usize> Decimal<N> {
     /// See more about the [logarithm function](crate#logarithm-function).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn ln_1p(self) -> Self {
+    pub const fn ln_1p(mut self) -> Self {
+        self.ln_1p_assign();
+        self
+    }
+
+    /// Returns _ln(1 + n)_ (natural logarithm).
+    ///
+    /// this will modify self in-place.
+    #[inline]
+    pub const fn ln_1p_assign(&mut self) -> &mut Self {
         math::ln::ln_1p(self).round_extra_precision().check()
     }
 
@@ -1447,7 +1603,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn log(self, base: Self) -> Self {
+    pub const fn log(mut self, base: &Self) -> Self {
+        self.log_assign(base);
+        self
+    }
+
+    /// Returns the _base_ logarithm of the decimal number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn log_assign(&mut self, base: &Self) -> &mut Self {
         math::log::log(self, base).round_extra_precision().check()
     }
 
@@ -1469,7 +1635,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn log2(self) -> Self {
+    pub const fn log2(mut self) -> Self {
+        self.log2_assign();
+        self
+    }
+
+    /// Returns the binary logarithm of the decimal number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn log2_assign(&mut self) -> &mut Self {
         math::log2::log2(self).round_extra_precision().check()
     }
 
@@ -1491,7 +1667,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn log10(self) -> Self {
+    pub const fn log10(mut self) -> Self {
+        self.log10_assign();
+        self
+    }
+
+    /// Returns the decimal logarithm of the given number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn log10_assign(&mut self) -> &mut Self {
         math::log10::log10(self).round_extra_precision().check()
     }
 
@@ -1514,7 +1700,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn hypot(self, other: Self) -> Self {
+    pub const fn hypot(mut self, other: &Self) -> Self {
+        self.hyopt_assign(other);
+        self
+    }
+
+    /// Calculate the length of the hypotenuse of a right-angle triangle given legs of length `x` and `y`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn hypot_assign(&mut self, other: &Self) -> &mut Self {
         math::hypot::hypot(self, other)
             .round_extra_precision()
             .check()
@@ -1538,8 +1734,19 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn mul_add(self, a: Self, b: Self) -> Self {
-        math::add::add(self.mul(a), b)
+    pub const fn mul_add(mut self, a: &Self, b: &Self) -> Self {
+        self.mul_add_assign(a, b);
+        self
+    }
+
+    /// Fused multiply-add. Computes `(self * a) + b`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn mul_add_assign(&mut self, a: &Self, b: &Self) -> &mut Self {
+        self.mul_assign(a);
+        math::add::add(self, b)
             .round_extra_precision()
             .check()
     }
@@ -1567,8 +1774,18 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn round(self, digits: i16) -> Self {
-        self.rescale(digits)
+    pub const fn round(mut self, digits: i16) -> Self {
+        self.round_assign(digits);
+        self
+    }
+
+    /// Returns the given decimal number rounded to `digits` precision.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn round_assign(&mut self, digits: i16) -> &mut Self {
+        self.rescale_assign(digits)
     }
 
     /// Returns the largest integer less than or equal to a number.
@@ -1592,11 +1809,21 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn floor(self) -> Self {
+    pub const fn floor(mut self) -> Self {
+        self.floor_assign();
+        self
+    }
+
+    /// Returns the largest integer less than or equal to a number.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn floor_assign(&mut self) -> &mut Self {
         round::floor(self)
     }
 
-    /// Finds the nearest integer greater than or equal to `x`.
+    /// Finds the nearest integer greater than or equal to `self`.
     ///
     /// # Examples
     ///
@@ -1618,7 +1845,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn ceil(self) -> Self {
+    pub const fn ceil(mut self) -> Self {
+        self.ceil_assign();
+        self
+    }
+
+    /// Finds the nearest integer greater than or equal to `self`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn ceil_assign(&mut self) -> &mut Self {
         round::ceil(self)
     }
 
@@ -1659,8 +1896,17 @@ impl<const N: usize> Decimal<N> {
     #[track_caller]
     #[inline]
     pub const fn rescale(mut self, new_scale: i16) -> Self {
-        scale::rescale(&mut self, new_scale);
-        self.round_extra_precision().check()
+        self.rescale_assign(new_scale);
+        self
+    }
+
+    /// Returns the given decimal number _re-scaled_ to `digits` precision.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn rescale_assign(&mut self, new_scale: i16) -> &mut Self {
+        scale::rescale(self, new_scale).round_extra_precision().check()
     }
 
     /// Returns a value equal to `self` (rounded), having the exponent of
@@ -1701,7 +1947,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn quantize(self, other: Self) -> Self {
+    pub const fn quantize(mut self, other: &Self) -> Self {
+        self.quantize_assign();
+        self
+    }
+
+    /// Returns a value equal to `self` (rounded), having the exponent of `other`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn quantize_assign(&mut self, other: &Self) -> &mut Self {
         scale::quantize(self, other).round_extra_precision().check()
     }
 
@@ -1724,7 +1980,7 @@ impl<const N: usize> Decimal<N> {
     /// [Exceptional condition]: crate#signaling-flags-and-trap-enablers
     #[inline]
     pub const fn ok(self) -> Option<Self> {
-        if self.cb.trap_signals().is_empty() {
+        if self.is_ok() {
             Some(self)
         } else {
             None
@@ -1744,7 +2000,17 @@ impl<const N: usize> Decimal<N> {
     #[must_use = doc::must_use_op!()]
     #[track_caller]
     #[inline]
-    pub const fn recip(self) -> Self {
+    pub const fn recip(mut self) -> Self {
+        self.recip_assign();
+        self
+    }
+
+    /// Takes the reciprocal (inverse) of a number, `1/x`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn recip_assign(&mut self) -> &mut Self {
         math::recip::recip(self).round_extra_precision().check()
     }
 
@@ -1760,8 +2026,19 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn to_degrees(self) -> Self {
-        math::mul::mul(math::div::div(self, Self::PI), Consts::C_180)
+    pub const fn to_degrees(mut self) -> Self {
+        self.to_degrees_assign();
+        self
+    }
+
+    /// Converts radians to degrees.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn to_degrees_assign(&mut self) -> &mut Self {
+        self.div_assign(&Self::PI)
+            .mul_assign(&Consts::C_180)
             .round_extra_precision()
             .check()
     }
@@ -1778,8 +2055,19 @@ impl<const N: usize> Decimal<N> {
     /// ```
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn to_radians(self) -> Self {
-        math::div::div(math::mul::mul(self, Self::PI), Consts::C_180)
+    pub const fn to_radians(mut self) -> Self {
+        self.to_radians_assign();
+        self
+    }
+
+    /// Converts degrees to radians.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn to_radians_assign(&mut self) -> &mut Self {
+        self.mul_assign(&Self::PI)
+            .div_assign(&Consts::C_180);
             .round_extra_precision()
             .check()
     }
@@ -1841,7 +2129,9 @@ impl<const N: usize> Decimal<N> {
     #[track_caller]
     #[inline]
     pub const fn transmute<const M: usize>(self) -> Decimal<M> {
-        transmute::transmute(self).round_extra_precision().check()
+        let mut target = transmute::transmute(self);
+        target.round_extra_precision().check();
+        target
     }
 
     /// Returns `true` if the decimal number is even.
@@ -1912,7 +2202,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn sin(self) -> Self {
+    pub const fn sin(mut self) -> Self {
+        self.sin_assign();
+        self
+    }
+
+    /// Computes _sin(self)_ (trigonometric sine of decimal number in radians).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn sin_assign(&mut self) -> &mut Self {
         math::sin::sin(self).round_extra_precision().check()
     }
 
@@ -1935,7 +2235,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn cos(self) -> Self {
+    pub const fn cos(mut self) -> Self {
+        self.cos_assign();
+        self
+    }
+
+    /// Computes _cos(self)_ (trigonometric cosine of decimal number in radians).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn cos_assign(&mut self) -> &mut Self {
         math::cos::cos(self).round_extra_precision().check()
     }
 
@@ -1958,7 +2268,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn tan(self) -> Self {
+    pub const fn tan(mut self) -> Self {
+        self.tan_assign();
+        self
+    }
+
+    /// Computes _tan(self)_ (trigonometric tangent of decimal number in radians).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn tan_assign(&mut self) -> &mut Self {
         math::tan::tan(self).round_extra_precision().check()
     }
 
@@ -1983,7 +2303,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn asin(self) -> Self {
+    pub const fn asin(mut self) -> Self {
+        self.asin_assign();
+        self
+    }
+
+    /// Computes _arcsin(self)_ (trigonometric arcsine of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn asin_assign(&mut self) -> &mut Self {
         math::asin::asin(self).round_extra_precision().check()
     }
 
@@ -2008,7 +2338,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn acos(self) -> Self {
+    pub const fn acos(mut self) -> Self {
+        self.acos_assign();
+        self
+    }
+
+    /// Computes _arccos(self)_ (trigonometric arccosine of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn acos_assign(&mut self) -> &mut Self {
         math::acos::acos(self).round_extra_precision().check()
     }
 
@@ -2034,7 +2374,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn atan(self) -> Self {
+    pub const fn atan(mut self) -> Self {
+        self.atan_assign();
+        self
+    }
+
+    /// Computes _arctan(self)_ (trigonometric arctangent of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn atan_assign(&mut self) -> &mut Self {
         math::atan::atan(self).round_extra_precision().check()
     }
 
@@ -2063,7 +2413,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn atan2(self, other: Self) -> Self {
+    pub const fn atan2(mut self, other: &Self) -> Self {
+        self.atan2_assign(other);
+        self
+    }
+
+    /// Computes the [_four quadrant_ arctangent](https://en.wikipedia.org/wiki/Atan2) of `self` and `other`.
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn atan2_assign(&mut self, other: &Self) -> &mut Self {
         math::atan2::atan2(self, other)
             .round_extra_precision()
             .check()
@@ -2114,7 +2474,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn sinh(self) -> Self {
+    pub const fn sinh(mut self) -> Self {
+        self.sinh_assign();
+        self
+    }
+
+    /// Computes _sinh(self)_ (hyperbolic sine of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn sinh_assign(&mut self) -> &mut Self {
         math::sinh::sinh(self).round_extra_precision().check()
     }
 
@@ -2136,7 +2506,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn cosh(self) -> Self {
+    pub const fn cosh(mut self) -> Self {
+        self.cosh_assign();
+        self
+    }
+
+    /// Computes _cosh(self)_ (hyperbolic cosine of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn cosh_assign(&mut self) -> &mut Self {
         math::cosh::cosh(self).round_extra_precision().check()
     }
 
@@ -2159,7 +2539,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn tanh(self) -> Self {
+    pub const fn tanh(mut self) -> Self {
+        self.tanh_assign();
+        self
+    }
+
+    /// Computes _tanh(self)_ (hyperbolic tangent of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn tanh_assign(&mut self) -> &mut Self {
         math::tanh::tanh(self).round_extra_precision().check()
     }
 
@@ -2181,7 +2571,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn asinh(self) -> Self {
+    pub const fn asinh(mut self) -> Self {
+        self.asinh_assign();
+        self
+    }
+
+    /// Computes _arsinh(self)_ (inverse hyperbolic sine of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn asinh_assign(&mut self) -> &mut Self {
         math::asinh::asinh(self).round_extra_precision().check()
     }
 
@@ -2203,7 +2603,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn acosh(self) -> Self {
+    pub const fn acosh(mut self) -> Self {
+        self.acosh_assign();
+        self
+    }
+
+    /// Computes _arcosh(self)_ (inverse hyperbolic cosine of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn acosh_assign(&mut self) -> &mut Self {
         math::acosh::acosh(self).round_extra_precision().check()
     }
 
@@ -2225,7 +2635,17 @@ impl<const N: usize> Decimal<N> {
     /// functions](crate#trigonometric-functions).
     #[must_use = doc::must_use_op!()]
     #[inline]
-    pub const fn atanh(self) -> Self {
+    pub const fn atanh(mut self) -> Self {
+        self.atanh_assign();
+        self
+    }
+
+    /// Computes _artanh(self)_ (inverse hyperbolic tangent of decimal number).
+    ///
+    /// this will modify self in-place.
+    #[track_caller]
+    #[inline]
+    pub const fn atanh_assign(&mut self) -> &mut Self {
         math::atanh::atanh(self).round_extra_precision().check()
     }
 }
@@ -2241,7 +2661,7 @@ impl<const N: usize> Decimal<N> {
 
     #[inline]
     pub(crate) const fn decimal_power(&self) -> i32 {
-        ilog10(self.digits) as i32 - self.cb.get_scale() as i32
+        (ilog10(self.digits) as i32) - (self.cb.get_scale() as i32)
     }
 
     #[inline(always)]
@@ -2255,65 +2675,65 @@ impl<const N: usize> Decimal<N> {
     }
 
     #[inline(always)]
-    pub(crate) const fn context(&self) -> Context {
+    pub const fn context(&self) -> Context {
         self.cb.get_context()
     }
 
     #[inline(always)]
-    pub(crate) const fn raise_signals(mut self, signals: Signals) -> Self {
+    pub(crate) const fn raise_signals(&mut self, signals: Signals) -> &mut Self {
         self.cb.raise_signals(signals);
         self
     }
 
     #[allow(dead_code)]
     #[inline(always)]
-    pub(crate) const fn quiet_signals(mut self, signals: Signals) -> Self {
+    pub(crate) const fn quiet_signals(&mut self, signals: Signals) -> &mut Self {
         self.cb.quiet_signals(signals);
         self
     }
 
     #[inline(always)]
-    pub(crate) const fn compound(mut self, other: &Self) -> Self {
+    pub(crate) const fn compound(&mut self, other: &Self) -> &mut Self {
         self.cb.compound(&other.cb);
         self
     }
 
     #[inline(always)]
-    pub(crate) const fn signaling_nan(mut self) -> Self {
+    pub(crate) const fn signaling_nan(&mut self) -> &mut Self {
         self.cb.signaling_nan();
         self
     }
 
     #[inline(always)]
-    pub(crate) const fn op_invalid(mut self) -> Self {
+    pub(crate) const fn op_invalid(&mut self) -> &mut Self {
         self.cb.raise_signals(Signals::OP_INVALID);
         self
     }
 
     #[inline(always)]
-    pub(crate) const fn op_overflow(mut self) -> Self {
+    pub(crate) const fn op_overflow(&mut self) -> &mut Self {
         self.cb.raise_signals(Signals::OP_OVERFLOW);
         self
     }
 
     #[inline(always)]
-    pub(crate) const fn set_sign(mut self, sign: Sign) -> Self {
+    pub(crate) const fn set_sign(&mut self, sign: Sign) -> &mut Self {
         self.cb.set_sign(sign);
         self
     }
 
     #[inline]
-    pub(crate) const fn set_ctx(mut self, ctx: Context) -> Self {
+    pub const fn set_ctx(&mut self, ctx: Context) -> &mut Self {
         self.cb.set_context(ctx);
         self
     }
 
     #[track_caller]
     #[inline]
-    pub(crate) const fn check(mut self) -> Self {
+    pub(crate) const fn check(&mut self) -> &mut Self {
         let trapped = self.cb.trap_signals();
 
-        if !trapped.is_empty() {
+        if ! trapped.is_empty() {
             DecimalError::from_signals(trapped).panic();
             self.cb.signaling_nan();
         }
@@ -2333,13 +2753,13 @@ impl<const N: usize> Decimal<N> {
     }
 
     #[inline(always)]
-    pub(crate) const fn round_extra_precision(mut self) -> Self {
-        round(&mut self);
+    pub(crate) const fn round_extra_precision(&mut self) -> &mut Self {
+        round(self);
         self
     }
 
     #[inline(always)]
-    pub(crate) const fn without_extra_digits(mut self) -> Self {
+    pub(crate) const fn without_extra_digits(&mut self) -> &mut Self {
         self.cb.reset_extra_precision();
         self
     }
@@ -2354,8 +2774,8 @@ impl<const N: usize> Decimal<N> {
         format!("D{}", N * 64)
     }
 
-    /// Write unsigned decimal in scientific notation to writer `w`.
-    pub(crate) fn write_scientific_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
+    /// Write Decimal in scientific notation to writer `w`.
+    pub fn write_scientific_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
         if self.is_nan() {
             return w.write_str("NaN");
         }
@@ -2377,8 +2797,8 @@ impl<const N: usize> Decimal<N> {
         format::write_scientific_notation(digits, scale, w)
     }
 
-    /// Write unsigned decimal in engineering notation to writer `w`.
-    pub(crate) fn write_engineering_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
+    /// Write Decimal in engineering notation to writer `w`.
+    pub fn write_engineering_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
         if self.is_nan() {
             return w.write_str("NaN");
         }

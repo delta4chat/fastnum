@@ -15,13 +15,17 @@ use crate::{
 type D<const N: usize> = Decimal<N>;
 
 #[inline]
-pub(crate) const fn sub<const N: usize>(lhs: D<N>, rhs: D<N>) -> D<N> {
+pub(crate) const fn sub<const N: usize>(lhs: &mut D<N>, rhs: &D<N>) -> &mut D<N> {
     if lhs.is_nan() {
-        return lhs.compound(&rhs).op_invalid();
+        lhs.compound(rhs).op_invalid();
+        return lhs;
     }
 
     if rhs.is_nan() {
-        return rhs.compound(&lhs).op_invalid();
+        let mut rhs = *rhs;
+        rhs.compound(&*lhs).op_invalid();
+        *lhs = *rhs;
+        return lhs;
     }
 
     match (lhs.cb.is_negative(), rhs.cb.is_negative()) {
@@ -33,71 +37,76 @@ pub(crate) const fn sub<const N: usize>(lhs: D<N>, rhs: D<N>) -> D<N> {
 }
 
 #[inline]
-pub(crate) const fn sub_abs<const N: usize>(mut lhs: D<N>, mut rhs: D<N>) -> D<N> {
+pub(crate) const fn sub_abs<const N: usize>(lhs: &mut D<N>, rhs: &D<N>) -> &mut D<N> {
     debug_assert!(!lhs.is_negative() && !rhs.is_negative());
 
     if lhs.is_infinite() && rhs.is_infinite() {
-        return D::SIGNALING_NAN.set_ctx(lhs.context()).compound(&rhs);
+        let lhs_ctx = lhs.context();
+        *lhs = D::SIGNALING_NAN;
+        return lhs.set_ctx(lhs_ctx).compound(rhs);
     } else if lhs.is_infinite() {
-        return lhs.compound(&rhs);
+        return lhs.compound(rhs);
     } else if rhs.is_infinite() {
-        return rhs.compound(&lhs).neg();
+        let mut rhs = *rhs;
+        rhs.compound(&*lhs).neg();
+        *lhs = *rhs;
+        return lhs;
     }
 
     if rhs.is_zero() {
-        return extend_scale_to(lhs, rhs.cb.get_scale()).compound(&rhs);
+        return extend_scale_to(lhs, rhs.cb.get_scale()).compound(rhs);
     }
 
     if lhs.is_zero() {
-        return extend_scale_to(rhs, lhs.cb.get_scale())
-            .compound(&lhs)
+        let mut rhs = *rhs;
+        extend_scale_to(rhs, lhs.cb.get_scale())
+            .compound(lhs)
             .neg();
+        *lhs = rhs;
+        return lhs;
     }
 
     match lhs.cb.scale_cmp(&rhs.cb) {
-        Ordering::Equal => sub_aligned(lhs, rhs),
+        Ordering::Equal => {},
         Ordering::Less => {
-            rescale(&mut lhs, rhs.cb.get_scale());
-
+            rescale(lhs, rhs.cb.get_scale());
             if lhs.is_op_clamped() {
-                rescale(&mut rhs, lhs.cb.get_scale());
-                sub_aligned(lhs, rhs)
-            } else {
-                sub_aligned(lhs, rhs)
+                rescale(rhs, lhs.cb.get_scale());
             }
-        }
+        },
         Ordering::Greater => {
-            rescale(&mut rhs, lhs.cb.get_scale());
-
+            rescale(rhs, lhs.cb.get_scale());
             if rhs.is_op_clamped() {
-                rescale(&mut lhs, rhs.cb.get_scale());
-                sub_aligned(lhs, rhs)
-            } else {
-                sub_aligned(lhs, rhs)
+                rescale(lhs, rhs.cb.get_scale());
             }
         }
     }
+
+    sub_aligned(lhs, rhs)
 }
 
 #[inline]
-const fn sub_aligned<const N: usize>(mut lhs: D<N>, mut rhs: D<N>) -> D<N> {
+const fn sub_aligned<const N: usize>(lhs: &mut D<N>, rhs: &D<N>) -> &mut D<N> {
     debug_assert!(lhs.cb.get_scale() == rhs.cb.get_scale());
 
     match lhs.digits.cmp(&rhs.digits) {
         Ordering::Less => {
+            let mut rhs = *rhs;
             rhs.digits = rhs.digits.strict_sub(lhs.digits);
-            utils::sub_extra_precision(&mut rhs, &lhs);
-            rhs.compound(&lhs).neg()
+            utils::sub_extra_precision(&mut rhs, &*lhs);
+            rhs.compound(&lhs).neg();
+            *lhs = rhs;
+            lhs
         }
         Ordering::Equal => {
             lhs.digits = UInt::ZERO;
-            utils::sub_extra_precision(&mut lhs, &rhs);
-            lhs.compound(&rhs)
+            utils::sub_extra_precision(lhs, rhs);
+            lhs.compound(rhs)
         }
         Ordering::Greater => {
             lhs.digits = lhs.digits.strict_sub(rhs.digits);
-            utils::sub_extra_precision(&mut lhs, &rhs);
-            lhs.compound(&rhs)
+            utils::sub_extra_precision(lhs, rhs);
+            lhs.compound(rhs)
         }
     }
 }

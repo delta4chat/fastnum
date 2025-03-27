@@ -6,13 +6,15 @@ use crate::decimal::{
 type D<const N: usize> = Decimal<N>;
 
 #[inline]
-pub(crate) const fn atanh<const N: usize>(x: D<N>) -> D<N> {
+pub(crate) const fn atanh<const N: usize>(x: &mut D<N>) -> &mut D<N> {
     if x.is_nan() {
         return x.op_invalid();
     }
 
     if x.is_zero() {
-        return D::ZERO.with_ctx(x.context());
+        let ctx = x.context();
+        *x = D::ZERO;
+        return x.set_ctx(ctx);
     }
 
     if x.is_infinite() {
@@ -23,5 +25,11 @@ pub(crate) const fn atanh<const N: usize>(x: D<N>) -> D<N> {
         return x.signaling_nan();
     }
 
-    mul(D::HALF, ln(div(add(D::ONE, x), sub(D::ONE, x))))
+    let mut y = D::ONE;
+    y.sub_assign(&x);
+
+    x.add_assign(&D::ONE)
+     .div_assign(&y)
+     .ln_assign()
+     .mul(&D::HALF)
 }
