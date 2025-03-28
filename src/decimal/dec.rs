@@ -2355,7 +2355,7 @@ impl<const N: usize> Decimal<N> {
     }
 
     /// Write unsigned decimal in scientific notation to writer `w`.
-    pub(crate) fn write_scientific_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
+    pub fn write_scientific_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
         if self.is_nan() {
             return w.write_str("NaN");
         }
@@ -2378,7 +2378,7 @@ impl<const N: usize> Decimal<N> {
     }
 
     /// Write unsigned decimal in engineering notation to writer `w`.
-    pub(crate) fn write_engineering_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
+    pub fn write_engineering_notation<W: fmt::Write>(&self, w: &mut W) -> fmt::Result {
         if self.is_nan() {
             return w.write_str("NaN");
         }

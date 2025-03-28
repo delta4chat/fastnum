@@ -1,12 +1,11 @@
 [package]
-name = "fastnum"
-version = "0.2.2"
+name = "fastnum2"
+version = "0.3.2"
 edition = "2021"
-authors = ["Neo"]
-description = "Fast decimal numbers library"
-documentation = "https://docs.rs/fastnum/"
-homepage = "https://github.com/neogenie/fastnum/"
-repository = "https://github.com/neogenie/fastnum"
+authors = ["Neo", "Delta 4"]
+description = "fork of Fast decimal numbers library"
+documentation = "https://docs.rs/fastnum2"
+repository = "https://github.com/delta4chat/fastnum"
 readme = "README.md"
 keywords = [
     "numeric",
@@ -18,7 +17,7 @@ keywords = [
 categories = ["mathematics", "science", "no-std"]
 license = "MIT OR Apache-2.0"
 autobenches = false
-exclude = ["examples/*", "benchmark/*"]
+#exclude = ["examples/*", "benchmark/*"]
 rust-version = "1.83"
 
 [lib]
@@ -81,6 +80,7 @@ extra-postgres-encode = ["extra-postgres", "bytes", "byteorder"]
 [profile.release]
 lto = true # enable link-time optimisation for faster runtime, but slower compile time
 opt-level = 3 # maximum optimisation level for faster runtime, but slower compile time
+codegen-units = 1
 
 [package.metadata.docs.rs]
 all-features = true
