@@ -74,7 +74,7 @@ dev = []
 
 # For internal use only
 test-util = ["num-traits"]
-extra-postgres = []
+extra-postgres = ["num-traits"]
 extra-postgres-encode = ["extra-postgres", "bytes", "byteorder"]
 
 [profile.release]

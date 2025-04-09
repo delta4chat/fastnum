@@ -4,6 +4,19 @@ All user-visible changes to this library will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/), as described
 for Rust libraries in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md)
 
+## [0.2.4] – unreleased
+
+### Added
+
+- add public constant functions for converts Decimal and UnsignedDecimal from/to Rust's primitive numeric
+  types: [#15](https://github.com/neogenie/fastnum/issues/15).
+
+## [0.2.3] – 2025-04-08
+
+### Fixed
+
+- Internal conversion to NBase fails for some numbers: [#16](https://github.com/neogenie/fastnum/issues/16).
+
 ## [0.2.2] – 2025-02-22
 
 ### Changed
@@ -15,7 +28,6 @@ for Rust libraries in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/
 - Minor fixes in float2decimal conversion.
 - Minor fixes with extra precision digits.
 
-
 ## [0.2.1] – 2025-02-18
 
 ### Fixed
@@ -26,7 +38,7 @@ for Rust libraries in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/
 
 This release primarily focuses on:
 
-- Increasing the accuracy of approximated mathematical calculations due to the use of `7` extra precision digits 
+- Increasing the accuracy of approximated mathematical calculations due to the use of `7` extra precision digits
   instead of `4`.
 - Performance optimizations.
 
