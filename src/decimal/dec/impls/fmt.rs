@@ -1,6 +1,11 @@
 use core::fmt::{self, Debug, Display, Formatter, LowerExp, UpperExp};
 
-use crate::decimal::{dec::format, utils, Decimal};
+use crate::decimal::{
+    utils,
+    dec::format,
+    Decimal,
+    Notation,
+};
 
 impl<const N: usize> Display for Decimal<N> {
     #[inline]
@@ -10,12 +15,33 @@ impl<const N: usize> Display for Decimal<N> {
         } else if self.is_infinite() {
             return write!(f, "{}Inf", self.sign());
         }
-        format::format(
-            self.digits.to_str_radix(10),
-            self.cb.get_scale(),
-            self.sign(),
-            f,
-        )
+
+        use Notation::*;
+        match self.ctx.notation() {
+            Unspecified => {
+                format::format(
+                    self.ctx,
+                    self.digits.to_str_radix(10),
+                    self.cb.get_scale(),
+                    self.sign(),
+                    f,
+                )
+            },
+            Scientific => {
+                self.write_scientific_notation(f)
+            },
+            FullScale => {
+                format::format_full_scale(
+                    self.digits.to_str_radix(10),
+                    self.cb.get_scale(),
+                    self.sign(),
+                    f,
+                )
+            },
+            Plain => {
+                todo!("TODO to_plain_string");
+            }
+        }
     }
 }
 

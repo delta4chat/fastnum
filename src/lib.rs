@@ -8,6 +8,7 @@ pub mod decimal;
 pub mod int;
 
 mod utils;
+mod config;
 
 pub use int::{I1024, I128, I2048, I256, I4096, I512, I8192};
 

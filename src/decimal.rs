@@ -27,7 +27,7 @@ pub(crate) mod errors;
 #[macro_use]
 mod macros;
 
-pub use context::{Context, RoundingMode, SignalsTraps};
+pub use context::{Context, Notation, FormatStyle, RoundingMode, SignalsTraps};
 pub use dec::Decimal;
 pub use errors::{DecimalError, ParseError};
 pub use sign::Sign;

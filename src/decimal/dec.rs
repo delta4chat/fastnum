@@ -51,6 +51,9 @@ pub struct Decimal<const N: usize> {
     /// Control block
     #[doc(hidden)]
     cb: ControlBlock,
+
+    /// the Context.
+    ctx: Context,
 }
 
 consts_impl!();
@@ -633,6 +636,11 @@ impl<const N: usize> Decimal<N> {
     #[inline]
     pub const fn is_negative(&self) -> bool {
         self.cb.is_negative()
+    }
+
+    /// Get current Context.
+    pub const fn get_ctx(&self) -> Context {
+        self.ctx
     }
 
     /// Apply [Context] to the given decimal number.
@@ -2230,13 +2238,13 @@ impl<const N: usize> Decimal<N> {
     }
 }
 
-#[doc(hidden)]
 impl<const N: usize> Decimal<N> {
-    pub(crate) const SIGNALING_NAN: Self = Self::new(UInt::ZERO, ControlBlock::SIGNALING_NAN);
+    pub(crate) const SIGNALING_NAN: Self = Self::new(UInt::ZERO, ControlBlock::SIGNALING_NAN, Context::DEFAULT);
 
     #[inline(always)]
-    pub(crate) const fn new(digits: UInt<N>, cb: ControlBlock) -> Self {
-        Self { digits, cb }
+    pub(crate) const fn new(digits: UInt<N>, cb: ControlBlock, ctx: Context) -> Self {
+        let this = Self { digits, cb, ctx };
+        this.set_ctx(ctx)
     }
 
     #[inline]
@@ -2305,6 +2313,7 @@ impl<const N: usize> Decimal<N> {
     #[inline]
     pub(crate) const fn set_ctx(mut self, ctx: Context) -> Self {
         self.cb.set_context(ctx);
+        self.ctx = ctx;
         self
     }
 

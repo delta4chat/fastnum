@@ -30,5 +30,5 @@ pub(crate) const fn transmute<const N: usize, const M: usize>(mut d: D<N>) -> D<
         }
     }
 
-    D::new(UInt::from_digits(digits), d.cb)
+    D::new(UInt::from_digits(digits), d.cb, d.ctx)
 }

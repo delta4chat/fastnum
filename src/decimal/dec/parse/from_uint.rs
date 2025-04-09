@@ -17,10 +17,11 @@ macro_rules! from_uint {
                 ControlBlock::new(
                     0,
                     Sign::Plus,
-                    Signals::empty(),
-                    Context::default(),
+                    Signals::EMPTY,
+                    Context::DEFAULT,
                     ExtraPrecision::new(),
                 ),
+                Context::DEFAULT,
             )
         }
     };

@@ -1,12 +1,23 @@
 use crate::{utils::assert_eq_size, *};
 
-macro_rules! assert_impl {
-    ($UINT: ident, $bits: literal) => {
-        assert_eq_size!($UINT, [u64; { $bits / 64 }]);
-    };
+macro_rules! assert_impls {
+    ($($uint:ident, $bits:literal;)*) => {
+        const _: () = {
+            $(
+                assert!(($bits % 64) == 0);
+                assert_eq_size!($uint, [u64; $bits / 64]);
+            )*
+        };
+    }
 }
 
-assert_impl!(U128, 128);
-assert_impl!(U256, 256);
-assert_impl!(U512, 512);
-assert_impl!(U1024, 1024);
+assert_impls!(
+    //U64, 64;
+    U128, 128;
+    U256, 256;
+    U512, 512;
+    U1024, 1024;
+    U2048, 2048;
+    U4096, 4096;
+    U8192, 8192;
+);

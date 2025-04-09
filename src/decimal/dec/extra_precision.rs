@@ -130,6 +130,7 @@ impl ExtraPrecision {
                 D::new(
                     UInt::from_digit(digit as u64),
                     ControlBlock::basic(0, Sign::Plus),
+                    Context::DEFAULT,
                 ),
             );
             self.digits = (self.digits % Self::EXTRA_PRECISION_SCALE) * 10;

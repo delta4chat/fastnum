@@ -23,10 +23,11 @@ macro_rules! from_int {
                 ControlBlock::new(
                     0,
                     sign,
-                    Signals::empty(),
-                    Context::default(),
+                    Signals::EMPTY,
+                    Context::DEFAULT,
                     ExtraPrecision::new(),
                 ),
+                Context::DEFAULT,
             )
         }
     };

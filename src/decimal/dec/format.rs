@@ -6,9 +6,9 @@ use crate::decimal::utils::cast::ToPrimitive;
 #[cfg(feature = "numtraits")]
 use num_traits::ToPrimitive;
 
-use crate::decimal::{RoundingMode, Sign};
+use crate::decimal::{Context, RoundingMode, Sign};
 
-include!(concat!(env!("OUT_DIR"), "/exponential_format_threshold.rs"));
+use crate::config::*;
 
 pub(crate) fn write_scientific_notation<W: Write>(
     digits: String,
@@ -62,33 +62,40 @@ pub(crate) fn write_engineering_notation<W: Write>(
 }
 
 pub(crate) fn format(
+    ctx: Context,
     digits: String,
     scale: i16,
     sign: Sign,
     f: &mut fmt::Formatter,
 ) -> fmt::Result {
     // number of zeros between the most significant digit and decimal point
-    let leading_zero_count = scale
-        .to_u64()
-        .and_then(|scale| scale.checked_sub(digits.len() as u64))
-        .unwrap_or(0);
+    // this ignores scientific-formatting if precision is requested
+    let leading_zeros =
+        f.precision()
+         .map(|_| 0)
+         .unwrap_or_else(|| {
+             scale.to_u64()
+                  .and_then(|scale| scale.checked_sub(digits.len() as u64))
+                  .unwrap_or(0)
+         });
 
     // number of zeros between last significant digit and decimal point
-    let trailing_zero_count = scale.checked_neg().and_then(|d| d.to_u64());
-
     // this ignores scientific-formatting if precision is requested
-    let trailing_zeros = f
-        .precision()
-        .map(|_| 0)
-        .or(trailing_zero_count)
-        .unwrap_or(0);
+    let trailing_zeros =
+        f.precision()
+         .map(|_| 0)
+         .unwrap_or_else(|| {
+             scale.checked_neg()
+                  .and_then(|d| d.to_u64())
+                  .unwrap_or(0)
+         });
 
-    let leading_zero_threshold = EXPONENTIAL_FORMAT_LEADING_ZERO_THRESHOLD as u64;
-    let trailing_zero_threshold = EXPONENTIAL_FORMAT_TRAILING_ZERO_THRESHOLD as u64;
+    let leading_zero_threshold = ctx.leading_zero_threshold() as u64;
+    let trailing_zero_threshold = ctx.trailing_zero_threshold() as u64;
 
     // use exponential form if decimal point is outside
     // the upper and lower thresholds of the decimal
-    if leading_zero_threshold < leading_zero_count {
+    if leading_zero_threshold < leading_zeros {
         format_exponential(digits, scale, sign, f, "E")
     } else if trailing_zero_threshold < trailing_zeros {
         // non-scientific notation
@@ -122,7 +129,7 @@ fn format_dotless_exponential(
     f.pad_integral(non_negative, "", &digits)
 }
 
-fn format_full_scale(
+pub(crate) fn format_full_scale(
     digits: String,
     scale: i16,
     sign: Sign,
@@ -179,13 +186,15 @@ fn zero_right_pad_integer_ascii_digits(
     debug_assert!(*exp >= 0);
 
     let trailing_zero_count = match exp.to_usize() {
-        Some(n) => n,
+        Some(n) => {
+            n
+        },
         None => {
             return;
         }
     };
     let total_additional_zeros = trailing_zero_count.saturating_add(precision.unwrap_or(0));
-    if total_additional_zeros > FMT_MAX_INTEGER_PADDING {
+    if total_additional_zeros > (FMT_MAX_INTEGER_PADDING as usize) {
         return;
     }
 

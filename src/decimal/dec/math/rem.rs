@@ -31,5 +31,5 @@ pub(crate) const fn rem<const N: usize>(mut lhs: D<N>, mut rhs: D<N>) -> D<N> {
     rhs.cb.abs();
     lhs.cb.compound(&rhs.cb);
 
-    D::new(lhs.digits.rem(rhs.digits), lhs.cb)
+    D::new(lhs.digits.rem(rhs.digits), lhs.cb, lhs.ctx)
 }

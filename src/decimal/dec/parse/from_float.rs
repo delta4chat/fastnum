@@ -58,10 +58,11 @@ macro_rules! from_float_impl {
                         ControlBlock::new(
                             0,
                             sign,
-                            Signals::empty(),
-                            Context::default(),
+                            Signals::EMPTY,
+                            Context::DEFAULT,
                             ExtraPrecision::new(),
                         ),
+                        Context::DEFAULT,
                     )
                 } else if pow < 0 {
                     let mut trailing_zeros = frac.trailing_zeros();

@@ -46,9 +46,10 @@ impl<const N: usize> Consts<N> {
             0,
             Sign::Plus,
             Signals::empty(),
-            Context::default(),
+            Context::DEFAULT,
             ExtraPrecision::new(),
         ),
+        Context::DEFAULT,
     );
 
     pub(crate) const MAX_F32: D<N> = const_scale(make_const(MAX_F32_BASE), -38);
@@ -106,7 +107,7 @@ const fn const_scale<const N: usize>(mut d: D<N>, scale: i16) -> D<N> {
 const fn parse_const<const N: usize>(buf: &[u8], len: u32) -> Result<D<N>, ParseError> {
     if (len as usize) < buf.len() {
         let (left, right) = buf.split_at(len as usize + 1);
-        let res = parse::from_slice(left, Context::default());
+        let res = parse::from_slice(left, Context::DEFAULT);
         match res {
             Ok(mut res) => {
                 res.cb.set_extra_precision(parse_extra_precision(right));
@@ -115,7 +116,7 @@ const fn parse_const<const N: usize>(buf: &[u8], len: u32) -> Result<D<N>, Parse
             Err(e) => Err(e),
         }
     } else {
-        parse::from_slice(buf, Context::default())
+        parse::from_slice(buf, Context::DEFAULT)
     }
 }
 

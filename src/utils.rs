@@ -12,9 +12,10 @@ macro_rules! err_msg {
 
 macro_rules! assert_eq_size {
     ($x:ty, $($xs:ty),+ $(,)?) => {
-        #[cfg(debug_assertions)]
-        const _: fn() = || {
-            $(let _ = core::mem::transmute::<$x, $xs>;)+
+        const _: () = {
+            if false {
+                $(let _ = core::mem::transmute::<$x, $xs>;)+
+            }
         };
     };
 }

@@ -14,32 +14,31 @@ use crate::{
 ///
 /// Memory layout:
 ///
-/// |  Bit  |          Data         |         Bit Mask        |
-/// |:-----:|:---------------------:|:-----------------------:|
-/// | 1-15  |    Scale              | `0x0000_0000_0000_FFFF` |
-/// | 16    |  Sign bit             | `0x0000_0000_0001_0000` |
-/// | 17    |   Nan flag            | `0x0000_0000_0002_0000` |
-/// | 18    |    Infinity flag      | `0x0000_0000_0004_0000` |
-/// | 19    | OP_CLAMPED            | `0x0000_0000_0008_0000` |
-/// | 20    | OP_DIV_BY_ZERO        | `0x0000_0000_0010_0000` |
-/// | 21    | OP_INVALID            | `0x0000_0000_0020_0000` |
-/// | 22    | OP_INEXACT            | `0x0000_0000_0040_0000` |
-/// | 23    | OP_OVERFLOW           | `0x0000_0000_0080_0000` |
-/// | 24    | OP_ROUNDED            | `0x0000_0000_0100_0000` |
-/// | 25    | OP_SUBNORMAL          | `0x0000_0000_0200_0000` |
-/// | 26    | OP_UNDERFLOW          | `0x0000_0000_0400_0000` |
-/// | 27    | T OP_CLAMPED          | `0x0000_0000_0800_0000` |
-/// | 28    | T OP_DIV_BY_ZERO      | `0x0000_0000_1000_0000` |
-/// | 29    | T OP_INVALID          | `0x0000_0000_2000_0000` |
-/// | 30    | T OP_INEXACT          | `0x0000_0000_4000_0000` |
-/// | 31    | T OP_OVERFLOW         | `0x0000_0000_8000_0000` |
-/// | 32    | T OP_ROUNDED          | `0x0000_0001_0000_0000` |
-/// | 33    | T OP_SUBNORMAL        | `0x0000_0002_0000_0000` |
-/// | 34    | T OP_UNDERFLOW        | `0x0000_0004_0000_0000` |
-/// | 35    |      Reserved         | `0x0000_0008_0000_0000` |
-/// | 36    |      Reserved         | `0x0000_0010_0000_0000` |
-/// | 37-39 | Rounding mode (3 bit) | `0x0000_00E0_0000_0000` |
-/// | 40-63 | Extra digits (24 bit) | `0xFFFF_FF00_0000_0000` |
+/// |  Bit  |          Data           |         Bit Mask        |
+/// |:-----:|:-----------------------:|:-----------------------:|
+/// | 1-15  |  Scale                  | `0x0000_0000_0000_FFFF` |
+/// | 16    |  Sign bit               | `0x0000_0000_0001_0000` |
+/// | 17    |  Nan flag               | `0x0000_0000_0002_0000` |
+/// | 18    |  Infinity flag          | `0x0000_0000_0004_0000` |
+/// | 19    | OP_CLAMPED              | `0x0000_0000_0008_0000` |
+/// | 20    | OP_DIV_BY_ZERO          | `0x0000_0000_0010_0000` |
+/// | 21    | OP_INVALID              | `0x0000_0000_0020_0000` |
+/// | 22    | OP_INEXACT              | `0x0000_0000_0040_0000` |
+/// | 23    | OP_OVERFLOW             | `0x0000_0000_0080_0000` |
+/// | 24    | OP_ROUNDED              | `0x0000_0000_0100_0000` |
+/// | 25    | OP_SUBNORMAL            | `0x0000_0000_0200_0000` |
+/// | 26    | OP_UNDERFLOW            | `0x0000_0000_0400_0000` |
+/// | 27    | T OP_CLAMPED            | `0x0000_0000_0800_0000` |
+/// | 28    | T OP_DIV_BY_ZERO        | `0x0000_0000_1000_0000` |
+/// | 29    | T OP_INVALID            | `0x0000_0000_2000_0000` |
+/// | 30    | T OP_INEXACT            | `0x0000_0000_4000_0000` |
+/// | 31    | T OP_OVERFLOW           | `0x0000_0000_8000_0000` |
+/// | 32    | T OP_ROUNDED            | `0x0000_0001_0000_0000` |
+/// | 33    | T OP_SUBNORMAL          | `0x0000_0002_0000_0000` |
+/// | 34    | T OP_UNDERFLOW          | `0x0000_0004_0000_0000` |
+/// | 35-36 | Format notation (2 bit) | `0x0000_0018_0000_0000` |
+/// | 37-39 | Rounding mode   (3 bit) | `0x0000_00E0_0000_0000` |
+/// | 40-63 | Extra digits   (24 bit) | `0xFFFF_FF00_0000_0000` |
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 #[repr(transparent)]
 pub(crate) struct ControlBlock(u64);
@@ -56,8 +55,8 @@ impl ControlBlock {
         Self::new(
             0,
             Sign::Plus,
-            Signals::empty(),
-            Context::default(),
+            Signals::EMPTY,
+            Context::DEFAULT,
             ExtraPrecision::new(),
         )
     }
@@ -67,8 +66,8 @@ impl ControlBlock {
         Self::new(
             scale,
             sign,
-            Signals::empty(),
-            Context::default(),
+            Signals::EMPTY,
+            Context::DEFAULT,
             ExtraPrecision::new(),
         )
     }

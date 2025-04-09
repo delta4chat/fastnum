@@ -43,6 +43,7 @@ pub const fn magnitude_inc<const N: usize>(d: &mut D<N>) {
                     d.context(),
                     ExtraPrecision::new(),
                 ),
+                d.ctx,
             ),
         );
     } else {
@@ -57,6 +58,7 @@ pub const fn magnitude_inc<const N: usize>(d: &mut D<N>) {
                     d.context(),
                     ExtraPrecision::new(),
                 ),
+                d.ctx,
             ),
         );
     }
@@ -76,6 +78,7 @@ pub const fn magnitude_dec<const N: usize>(d: &mut D<N>) {
                     d.context(),
                     ExtraPrecision::new(),
                 ),
+                d.ctx,
             ),
         );
     } else {
@@ -90,6 +93,7 @@ pub const fn magnitude_dec<const N: usize>(d: &mut D<N>) {
                     d.context(),
                     ExtraPrecision::new(),
                 ),
+                d.ctx,
             ),
         );
     }

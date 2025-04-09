@@ -22,10 +22,11 @@ pub(crate) const fn f2dec<const N: usize>(mant: u64, b_exp: i16, sign: Sign) -> 
             ControlBlock::new(
                 0,
                 sign,
-                Signals::empty(),
-                Context::default(),
+                Signals::EMPTY,
+                Context::DEFAULT,
                 ExtraPrecision::new(),
             ),
+            Context::DEFAULT,
         );
     }
 
@@ -37,10 +38,11 @@ pub(crate) const fn f2dec<const N: usize>(mant: u64, b_exp: i16, sign: Sign) -> 
             ControlBlock::new(
                 d_exp,
                 sign,
-                Signals::empty(),
-                Context::default(),
+                Signals::EMPTY,
+                Context::DEFAULT,
                 ExtraPrecision::new(),
             ),
+            Context::DEFAULT,
         );
 
         div(d, psi).round_extra_precision().check()
@@ -52,10 +54,11 @@ pub(crate) const fn f2dec<const N: usize>(mant: u64, b_exp: i16, sign: Sign) -> 
             ControlBlock::new(
                 -d_exp,
                 sign,
-                Signals::empty(),
-                Context::default(),
+                Signals::EMPTY,
+                Context::DEFAULT,
                 ExtraPrecision::new(),
             ),
+            Context::DEFAULT,
         );
 
         mul(d, psi).round_extra_precision().check()

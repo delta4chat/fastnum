@@ -63,7 +63,7 @@ pub(crate) const fn construct_with_clength<const N: usize>(
         }
 
         let cb = ControlBlock::new(-exp as i16, sign, signals, ctx, extra_precision);
-        return D::new(digits, cb);
+        return D::new(digits, cb, ctx);
     }
 
     signals.raise(Signals::OP_ROUNDED);
@@ -89,7 +89,7 @@ pub(crate) const fn construct_with_clength<const N: usize>(
     }
 
     let cb = ControlBlock::new(-exp as i16, sign, signals, ctx, extra_precision);
-    D::new(digits, cb)
+    D::new(digits, cb, ctx)
 }
 
 #[inline]
@@ -110,5 +110,5 @@ const fn construct_zero<const N: usize>(
         ControlBlock::new(-exp as i16, sign, signals, ctx, extra_precision)
     };
 
-    D::new(UInt::ZERO, cb)
+    D::new(UInt::ZERO, cb, ctx)
 }

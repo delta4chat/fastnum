@@ -12,8 +12,11 @@ use crate::decimal::Signals;
 pub struct SignalsTraps(Signals);
 
 impl SignalsTraps {
-    const EMPTY: Self = Self(Signals::EMPTY);
-    const DEFAULT: Self = Self(Signals::DEFAULT_TRAPS);
+    /// empty value of `SignalsTraps`.
+    pub const EMPTY: Self = Self(Signals::EMPTY);
+
+    /// default value of `SignalsTraps`.
+    pub const DEFAULT: Self = Self(Signals::DEFAULT_TRAPS);
 
     #[inline(always)]
     pub(crate) const fn new(signals: Signals) -> Self {

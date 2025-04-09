@@ -1,7 +1,7 @@
 use crate::{
     decimal::{
         dec::{transmute::transmute, ControlBlock},
-        Decimal, Sign,
+        Decimal, Sign, Context,
     },
     int::UInt,
 };
@@ -1163,61 +1163,73 @@ pub(crate) const fn lookup<const N: usize>(b_exp: i16) -> (i16, D<N>) {
         transmute(D::<1>::new(
             UInt::from_digits([PSI[b_exp as usize]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 128 {
         transmute(D::<2>::new(
             UInt::from_digits([0, PSI[b_exp as usize - 64]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 192 {
         transmute(D::<3>::new(
             UInt::from_digits([0, 0, PSI[b_exp as usize - 128]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 256 {
         transmute(D::<4>::new(
             UInt::from_digits([0, 0, 0, PSI[b_exp as usize - 192]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 320 {
         transmute(D::<5>::new(
             UInt::from_digits([0, 0, 0, 0, PSI[b_exp as usize - 256]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 384 {
         transmute(D::<6>::new(
             UInt::from_digits([0, 0, 0, 0, 0, PSI[b_exp as usize - 320]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 448 {
         transmute(D::<7>::new(
             UInt::from_digits([0, 0, 0, 0, 0, 0, PSI[b_exp as usize - 384]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 512 {
         transmute(D::<8>::new(
             UInt::from_digits([0, 0, 0, 0, 0, 0, 0, PSI[b_exp as usize - 448]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 576 {
         transmute(D::<9>::new(
             UInt::from_digits([0, 0, 0, 0, 0, 0, 0, 0, PSI[b_exp as usize - 512]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 640 {
         transmute(D::<10>::new(
             UInt::from_digits([0, 0, 0, 0, 0, 0, 0, 0, 0, PSI[b_exp as usize - 576]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 704 {
         transmute(D::<11>::new(
             UInt::from_digits([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PSI[b_exp as usize - 640]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 768 {
         transmute(D::<12>::new(
             UInt::from_digits([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PSI[b_exp as usize - 704]]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 832 {
         transmute(D::<13>::new(
@@ -1237,6 +1249,7 @@ pub(crate) const fn lookup<const N: usize>(b_exp: i16) -> (i16, D<N>) {
                 PSI[b_exp as usize - 768],
             ]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 896 {
         transmute(D::<14>::new(
@@ -1257,6 +1270,7 @@ pub(crate) const fn lookup<const N: usize>(b_exp: i16) -> (i16, D<N>) {
                 PSI[b_exp as usize - 832],
             ]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 960 {
         transmute(D::<15>::new(
@@ -1278,6 +1292,7 @@ pub(crate) const fn lookup<const N: usize>(b_exp: i16) -> (i16, D<N>) {
                 PSI[b_exp as usize - 896],
             ]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else if b_exp < 1024 {
         transmute(D::<16>::new(
@@ -1300,6 +1315,7 @@ pub(crate) const fn lookup<const N: usize>(b_exp: i16) -> (i16, D<N>) {
                 PSI[b_exp as usize - 960],
             ]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     } else {
         transmute(D::<17>::new(
@@ -1323,6 +1339,7 @@ pub(crate) const fn lookup<const N: usize>(b_exp: i16) -> (i16, D<N>) {
                 PSI[b_exp as usize - 1024],
             ]),
             ControlBlock::basic(d_exp, Sign::Plus),
+            Context::DEFAULT,
         ))
     };
 

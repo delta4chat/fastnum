@@ -1,4 +1,4 @@
-include!(concat!(env!("OUT_DIR"), "/serde_deserialize_mode.rs"));
+use crate::config::*;
 
 /// Determines how to deserialize decimal numbers
 ///
