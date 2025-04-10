@@ -100,6 +100,7 @@ impl ControlBlock {
         if !rm.is_default() {
             self.set_rounding_mode(rm);
         }
+        self.set_format_notation(other.get_format_notation());
     }
 }
 

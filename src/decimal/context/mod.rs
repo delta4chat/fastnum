@@ -23,7 +23,7 @@ pub enum Notation {
     /// Scientific notation.
     Scientific = 0b01, // 1
 
-    /// Full-scale notation (max precision, but uses scientific notation for fractional numbers).
+    /// Full-scale notation (max precision, but uses scientific notation in case of too many trailing zeros)
     FullScale = 0b10, // 2
 
     /// Plain notation without scientific notation.
