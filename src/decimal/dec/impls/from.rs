@@ -4,15 +4,6 @@ type D<const N: usize> = Decimal<N>;
 
 macro_rules! from_num_impls {
     ($($name:ident $num:ty,)*) => {
-        $(
-            impl<const N: usize> From<$num> for D<N> {
-                #[inline]
-                fn from(n: $num) -> Self {
-                    parse::$name(n)
-                }
-            }
-        )*
-
         impl<const N: usize> D<N> {
             $(
                 #[inline]
@@ -22,6 +13,15 @@ macro_rules! from_num_impls {
                 }
             )*
         }
+
+        $(
+            impl<const N: usize> From<$num> for D<N> {
+                #[inline]
+                fn from(n: $num) -> Self {
+                    Self::$name(n)
+                }
+            }
+        )*
     };
 }
 

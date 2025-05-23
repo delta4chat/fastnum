@@ -58,6 +58,7 @@ macro_rules! test_impl {
 
         #[rstest(::trace)]
         #[case($dec!(3), $dec!(0.333333333333333333333333333333333333333))]
+        #[case($dec!(66100475480188776883681620311725717740e40), $dec!(1.51284842164216167586151431364401611529e-78))]
         fn test_recip_128(#[case] d: $D, #[case] expected: $D) {
             let res = d.recip();
 

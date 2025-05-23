@@ -2236,6 +2236,38 @@ impl<const N: usize> Decimal<N> {
     pub const fn atanh(self) -> Self {
         math::atanh::atanh(self).round_extra_precision().check()
     }
+
+    /// Converts from [UnsignedDecimal] to a signed [Decimal] number.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fastnum::*;
+    ///
+    /// let d = udec256!(1.2345);
+    ///
+    /// assert_eq!(D256::from_unsigned(d), dec256!(1.2345));
+    /// ```
+    #[must_use = doc::must_use_op!()]
+    #[inline]
+    pub const fn from_unsigned(ud: UnsignedDecimal<N>) -> Self {
+        ud.to_signed()
+    }
+
+    /// Try converts from [Decimal] to [UnsignedDecimal].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fastnum::*;
+    ///
+    /// assert_eq!(dec256!(1.2345).try_to_unsigned(), Ok(udec256!(1.2345)));
+    /// assert!(dec256!(-1.2345).try_to_unsigned().is_err());
+    /// ```
+    #[inline]
+    pub const fn try_to_unsigned(self) -> Result<UnsignedDecimal<N>, DecimalError> {
+        UnsignedDecimal::try_from_signed(self)
+    }
 }
 
 impl<const N: usize> Decimal<N> {

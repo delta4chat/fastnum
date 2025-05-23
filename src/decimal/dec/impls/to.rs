@@ -1,11 +1,21 @@
 use core::num::IntErrorKind;
 
-use crate::decimal::{dec::convert, Decimal, UnsignedDecimal, DecimalError};
+use crate::decimal::{dec::convert, Decimal};
 
 type D<const N: usize> = Decimal<N>;
 
-macro_rules! try_to_int_impls {
+macro_rules! try_to_impl {
     ($($name:ident $int:ty,)*) => {
+        impl<const N: usize> D<N> {
+            $(
+                #[inline]
+                #[doc = concat!("Converts [Decimal] into [`", stringify!($int), "`].")]
+                pub const fn $name(self) -> Result<$int, IntErrorKind> {
+                    convert::$name(self)
+                }
+            )*
+        }
+
         $(
             impl<const N: usize> TryFrom<D<N>> for $int {
                 type Error = IntErrorKind;
@@ -16,20 +26,10 @@ macro_rules! try_to_int_impls {
                 }
             }
         )*
-
-        impl<const N: usize> D<N> {
-            $(
-                #[inline]
-                #[doc = concat!("Converts [Decimal] into [`", stringify!($int), "`].")]
-                pub const fn $name(self) -> Result<$int, IntErrorKind> {
-                    convert::$name(self)
-                }
-            )*
-        }
     };
 }
 
-try_to_int_impls!(
+try_to_impl!(
     to_u8 u8,
     to_u16 u16,
     to_u32 u32,
@@ -67,10 +67,5 @@ impl<const N: usize> D<N> {
     /// Converts [Decimal] into [`f64`].
     pub const fn to_f64(self) -> f64 {
         convert::to_f64(self)
-    }
-
-    /// Converts [Decimal] into [UnsignedDecimal].
-    pub const fn to_unsigned_decimal(self) -> Result<UnsignedDecimal<N>, DecimalError> {
-        UnsignedDecimal::from_decimal(self)
     }
 }

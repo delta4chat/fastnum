@@ -217,13 +217,17 @@ fn zero_right_pad_integer_ascii_digits(
 fn trim_ascii_digits(digits: &mut Vec<u8>, scale: u64, sign: Sign, prec: u64, exp: &mut i128) {
     debug_assert!(scale < digits.len() as u64);
     // there are both integer and fractional digits
-    let integer_digit_count = (digits.len() as u64 - scale)
+    let mut integer_digit_count = (digits.len() as u64 - scale)
         .to_usize()
         .expect("Number of digits exceeds maximum usize");
 
     if prec < scale {
         let prec = prec.to_usize().expect("Precision exceeds maximum usize");
-        apply_rounding_to_ascii_digits(digits, exp, sign, integer_digit_count + prec);
+        if apply_rounding_to_ascii_digits(digits, exp, sign, integer_digit_count + prec) {
+            digits[0] = b'1';
+            integer_digit_count += 1;
+            digits.push(b'0');
+        }
     }
 
     if prec != 0 {
@@ -279,15 +283,26 @@ fn shift_or_trim_fractional_digits(
             digits.push(rounded_value + b'0');
         }
         Some(digit_prec) => {
+            let mut carry = false;
             let digit_prec = digit_prec as usize;
-            let leading_zeros = leading_zeros
+            let mut leading_zeros = leading_zeros
                 .to_usize()
                 .expect("Number of leading zeros exceeds max usize");
             let trailing_zeros = digit_prec.saturating_sub(digits.len());
             if digit_prec < digits.len() {
-                apply_rounding_to_ascii_digits(digits, exp, sign, digit_prec);
+                carry = apply_rounding_to_ascii_digits(digits, exp, sign, digit_prec);
             }
-            digits.extend_from_slice(b"0.");
+            if carry {
+                if prec <= digit_prec as u64 {
+                    digits.extend_from_slice(b"1.");
+                } else {
+                    digits.insert(0, b'1');
+                    leading_zeros = leading_zeros.saturating_sub(1);
+                    digits.extend_from_slice(b"0.");
+                }
+            } else {
+                digits.extend_from_slice(b"0.");
+            }
             digits.resize(digits.len() + leading_zeros, b'0');
             digits.rotate_right(leading_zeros + 2);
 
@@ -320,7 +335,9 @@ fn format_exponential_be_ascii_digits(
             }
             Ordering::Less => {
                 // round to smaller precision
-                apply_rounding_to_ascii_digits(&mut digits, &mut exp, sign, total_prec);
+                if apply_rounding_to_ascii_digits(&mut digits, &mut exp, sign, total_prec) {
+                    digits[0] = b'1';
+                }
             }
             Ordering::Greater => {
                 // increase number of zeros to add to end of digits
@@ -333,47 +350,6 @@ fn format_exponential_be_ascii_digits(
 
     let mut abs_int = String::from_utf8(digits).unwrap();
 
-    // Determine the exponent value based on the scale
-    //
-    // # First case: the integer representation falls completely behind the
-    //   decimal point.
-    //
-    //   Example of this.scale > abs_int.len():
-    //   0.000001234509876
-    //   abs_int.len() = 10
-    //   scale = 15
-    //   target is 1.234509876
-    //   exponent = -6
-    //
-    //   Example of this.scale == abs_int.len():
-    //   0.333333333333333314829616256247390992939472198486328125
-    //   abs_int.len() = 54
-    //   scale = 54
-    //   target is 3.33333333333333314829616256247390992939472198486328125
-    //   exponent = -1
-    //
-    // # Second case: the integer representation falls around, or before the
-    //   decimal point
-    //
-    //   ## Case 2.1, entirely before the decimal point.
-    //     Example of (abs_int.len() - this.scale) > abs_int.len():
-    //     123450987600000
-    //     abs_int.len() = 10
-    //     scale = -5
-    //     location = 15
-    //     target is 1.234509876
-    //     exponent = 14
-    //
-    //   ## Case 2.2, somewhere around the decimal point.
-    //     Example of (abs_int.len() - this.scale) < abs_int.len():
-    //     12.339999999999999857891452847979962825775146484375
-    //     abs_int.len() = 50
-    //     scale = 48
-    //     target is 1.2339999999999999857891452847979962825775146484375
-    //     exponent = 1
-    //
-    //     For the (abs_int.len() - this.scale) == abs_int.len() I couldn't
-    //     come up with an example
     let exponent = abs_int.len() as i128 + exp - 1;
 
     if needs_decimal_point {
@@ -382,7 +358,7 @@ fn format_exponential_be_ascii_digits(
     }
 
     if extra_trailing_zero_count > 0 {
-        abs_int.extend(core::iter::repeat('0').take(extra_trailing_zero_count));
+        abs_int.extend(core::iter::repeat_n('0', extra_trailing_zero_count));
     }
 
     // always print exponent in exponential mode
@@ -392,15 +368,15 @@ fn format_exponential_be_ascii_digits(
     f.pad_integral(non_negative, "", &abs_int)
 }
 
-/// Round big-endian digits in ascii
+#[must_use = "must use carry result"]
 fn apply_rounding_to_ascii_digits(
     ascii_digits: &mut Vec<u8>,
     exp: &mut i128,
     sign: Sign,
     prec: usize,
-) {
+) -> bool {
     if ascii_digits.len() < prec {
-        return;
+        return false;
     }
 
     // shift exp to align with new length of digits
@@ -425,7 +401,7 @@ fn apply_rounding_to_ascii_digits(
     // push rounded value
     if rounded_digit < 10 {
         ascii_digits.push(rounded_digit + b'0');
-        return;
+        return false;
     }
 
     debug_assert_eq!(rounded_digit, 10);
@@ -439,7 +415,7 @@ fn apply_rounding_to_ascii_digits(
         if *digit < b'9' {
             // we've carried the one as far as it will go
             *digit += 1;
-            return;
+            return false;
         }
 
         debug_assert_eq!(*digit, b'9');
@@ -449,11 +425,6 @@ fn apply_rounding_to_ascii_digits(
         *digit = b'0';
     }
 
-    // at this point, all digits have become zero
-    // just set a significant digit to 1 and increase exponent
-    //
-    // eg: 9999e2 ~> 0000e2 ~> 1000e3
-    //
-    ascii_digits[0] = b'1';
     *exp += 1;
+    true
 }

@@ -13,6 +13,30 @@ pub(crate) const fn eq<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> bool {
         return false;
     }
 
+    eq_not_nan(lhs, rhs)
+}
+
+#[inline]
+pub(crate) const fn ne<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> bool {
+    if lhs.is_nan() || rhs.is_nan() {
+        return true;
+    }
+
+    !eq_not_nan(lhs, rhs)
+}
+
+#[inline]
+pub(crate) const fn cmp<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> Ordering {
+    match (lhs.is_negative(), rhs.is_negative()) {
+        (false, true) => Ordering::Greater,
+        (true, false) => Ordering::Less,
+        (true, true) => cmp_magnitude(lhs, rhs).reverse(),
+        (false, false) => cmp_magnitude(lhs, rhs),
+    }
+}
+
+#[inline(always)]
+const fn eq_not_nan<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> bool {
     if lhs.is_negative() ^ rhs.is_negative() {
         return false;
     }
@@ -41,28 +65,39 @@ pub(crate) const fn eq<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> bool {
     }
 }
 
-#[inline]
-pub(crate) const fn ne<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> bool {
-    !lhs.eq(rhs)
-}
-
-#[inline]
-pub(crate) const fn cmp<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> Ordering {
-    match (lhs.is_negative(), rhs.is_negative()) {
-        (false, true) => Ordering::Greater,
-        (true, false) => Ordering::Less,
-        (true, true) => cmp_magnitude(lhs, rhs).reverse(),
-        (false, false) => cmp_magnitude(lhs, rhs),
-    }
-}
-
 #[inline(always)]
 const fn eq_rounded<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> bool {
     (lhs.cb.get_scale() == rhs.cb.get_scale()) && (lhs.digits.eq(&rhs.digits))
 }
 
-#[inline]
+#[inline(always)]
 const fn cmp_magnitude<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> Ordering {
+    match (lhs.is_nan(), rhs.is_nan()) {
+        (true, true) => {
+            return Ordering::Equal;
+        }
+        (true, false) => {
+            return Ordering::Greater;
+        }
+        (false, true) => {
+            return Ordering::Less;
+        }
+        (false, false) => {}
+    }
+
+    match (lhs.is_infinite(), rhs.is_infinite()) {
+        (false, true) => {
+            return Ordering::Less;
+        }
+        (true, false) => {
+            return Ordering::Greater;
+        }
+        (true, true) => {
+            return Ordering::Equal;
+        }
+        (false, false) => {}
+    }
+
     let lhs = reduce(*lhs);
     let rhs = reduce(*rhs);
 
@@ -78,7 +113,7 @@ const fn cmp_magnitude<const N: usize>(lhs: &D<N>, rhs: &D<N>) -> Ordering {
     }
 }
 
-#[inline]
+#[inline(always)]
 const fn cmp_rounded<const N: usize>(a: &D<N>, b: &D<N>) -> Ordering {
     match (a.is_zero(), b.is_zero()) {
         (true, true) => {
@@ -117,11 +152,11 @@ const fn cmp_rounded<const N: usize>(a: &D<N>, b: &D<N>) -> Ordering {
             let (mul, false) =
                 UInt::TEN.overflowing_pow((b.cb.get_scale() - a.cb.get_scale()) as u32)
             else {
-                return Ordering::Less;
+                return Ordering::Greater;
             };
 
             let (value, false) = a.digits.overflowing_mul(mul) else {
-                return Ordering::Less;
+                return Ordering::Greater;
             };
 
             value.cmp(&b.digits)

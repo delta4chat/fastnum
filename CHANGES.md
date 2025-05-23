@@ -4,12 +4,54 @@ All user-visible changes to this library will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/), as described
 for Rust libraries in [RFC #1105](https://github.com/rust-lang/rfcs/blob/master/text/1105-api-evolution.md)
 
-## [0.2.4] – unreleased
+## [0.3.0] – unreleased
+
+### Changed
+
+- Format module is completely refactored.
+
+## [0.2.8] – 2025-05-17
 
 ### Added
 
-- add public constant functions for converts Decimal and UnsignedDecimal from/to Rust's primitive numeric
+- Add `impl From<UnsignedDecimal> for Decimal` convertion trait implementation.
+
+### Fixed
+
+- Fix display rounding error: [#24](https://github.com/neogenie/fastnum/issues/24).
+
+## [0.2.7] – 2025-05-15
+
+### Fixed
+
+- Incorrect cmp implementation: [#22](https://github.com/neogenie/fastnum/issues/22).
+
+## [0.2.6] – 2025-05-13
+
+### Fixed
+
+- The comparison function does not correctly implement a total
+  order: [#21](https://github.com/neogenie/fastnum/issues/21).
+
+## [0.2.5] – 2025-05-04
+
+### Added
+
+- Examples for compile time environment variables.
+
+### Fixed
+
+- Failing to converge the Brent iterative method for calculating reciprocals (infinity
+  loop): [#20](https://github.com/neogenie/fastnum/issues/20).
+
+## [0.2.4] – 2025-05-03
+
+### Added
+
+- Add public constant functions for convert Decimal and UnsignedDecimal from/to Rust's primitive numeric
   types: [#15](https://github.com/neogenie/fastnum/issues/15).
+- Introduce `.transmute()` operation for N-to-M bit unsigned decimal
+  conversion: [#18](https://github.com/neogenie/fastnum/issues/18).
 
 ## [0.2.3] – 2025-04-08
 

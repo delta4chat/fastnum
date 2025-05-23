@@ -1,6 +1,7 @@
 use crate::decimal::{
     dec::{
         convert::to_f64,
+        intrinsics::Intrinsics,
         math::{add::add, div::div, mul::mul},
         parse::{from_f64, from_u32},
     },
@@ -43,15 +44,16 @@ const fn nth_root_newton<const N: usize>(d: D<N>, n: u32) -> D<N> {
     let n_minus_one = from_u32(n - 1);
     let one_div_n = D::ONE.div(from_u32(n));
     let mut x_n;
-    let mut i;
+    let mut j;
+    let mut i = 1;
 
-    while result.is_ok() {
+    while result.is_ok() && i < Intrinsics::<N>::SERIES_MAX_ITERATIONS {
         x_n = result;
-        i = n - 2;
+        j = n - 2;
 
-        while i > 0 {
+        while j > 0 {
             x_n = mul(x_n, result);
-            i -= 1;
+            j -= 1;
         }
 
         result_next = mul(one_div_n, add(mul(n_minus_one, result), div(d, x_n)));
@@ -61,6 +63,7 @@ const fn nth_root_newton<const N: usize>(d: D<N>, n: u32) -> D<N> {
         }
 
         result = result_next;
+        i += 1;
     }
 
     result

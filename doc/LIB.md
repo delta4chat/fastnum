@@ -1069,7 +1069,7 @@ towards [`–Infinity`], if necessary) and then:
 * If the operand is less than zero, an ['Invalid operation'] condition is raised.
 * If the operand is greater than zero, the result is the square root of the operand.
 * Otherwise (the operand is equal to zero), the result will be the zero with the same sign as the operand and with the
-* ideal exponent.
+  ideal exponent.
 
 ##### Examples:
 
@@ -1099,13 +1099,13 @@ Square-root can also be calculated by using the power operation (with a second o
 
 [`nth_root(self, n)`](crate::decimal::Decimal::nth_root)
 
-If the operand is a [special value] then the [general rules] apply.
+If the operand is a [special value], then the [general rules] apply.
 Otherwise, the ideal exponent of the result is defined to be half the exponent of the operand (rounded to an integer,
 towards [`–Infinity`], if necessary) and then:
 
 * If the operand is less than zero and `n` is even, an ['Invalid operation'] condition is raised.
-* If the operand is equal to zero, the result will be the zero with the same sign as the operand and with the
-* ideal exponent.
+* If the operand is equal to zero, the result will be the zero with the same sign as the operand and with the ideal
+  exponent.
 * Otherwise, the result is the N-th root of the operand.
 
 ##### Examples:
@@ -1133,9 +1133,9 @@ with the following cases:
 
 * If the operand is [`–Infinity`], the result is `0` and exact.
 * If the operand is a zero, the result is `1` and exact.
-* If the operand is [`Infinity`], the result is [`Infinity`] and exact.
-* Otherwise, the result is inexact and will be rounded using the context rounding mode.
-* The coefficient will have exactly precision digits (unless the result is subnormal).
+* If the operand is [`Infinity`], the result is [`Infinity`] and exact. Otherwise, the result is inexact and will be
+  rounded using the context rounding mode.
+* The coefficient will have exact precision digits (unless the result is subnormal).
 
 ##### Examples:
 
@@ -1302,7 +1302,7 @@ assert_eq!(dec256!(512).log2(), dec256!(9));
 | [_acosh(x)_] | [`acosh(self)`] | _1 ≤ x < +∞_  |      _-∞ < x < +∞_      |
 | [_atanh(x)_] | [`atanh(self)`] | _-1 < x < 1_  |      _-∞ < x < +∞_      |
 
-### Compare and ordering
+## Compare and ordering
 
 The result of any compare operation is always exact and unrounded.
 
@@ -1319,7 +1319,23 @@ The result of any compare operation is always exact and unrounded.
 | min   |       ➖       |   [`min`](crate::decimal::UnsignedDecimal::min)   |   [`min`](crate::decimal::Decimal::min)   |
 | clamp |       ➖       | [`clamp`](crate::decimal::UnsignedDecimal::clamp) | [`clamp`](crate::decimal::Decimal::clamp) |
 
-#### Examples
+### Total-ordering predicate
+
+The [IEEE 754] standard provides a _Total-ordering predicate_, which defines a total ordering on canonical members of
+the supported arithmetic format.
+The predicate agrees with the comparison predicates (see section _§ Comparison predicates_) when one decimal number is
+less than the other.
+
+The main differences are:
+
+- [`NaN`] is sortable.
+  [`NaN`] is treated as if it had a larger absolute value than [`Infinity`] (or any other decimal numbers).<br/>
+  _(-[`NaN`] < [`-Infinity`] < ... < [`+Infinity`] < +[`NaN`])_
+- Negative zero is treated as smaller than positive zero.
+- If both sides of the comparison refer to the same decimal datum, the one with the lesser exponent is treated as
+  having a lesser absolute value.
+
+### Examples
 
 ```
 use fastnum::*;
@@ -1327,9 +1343,14 @@ use fastnum::*;
 assert!(dec256!(0.2) == dec256!(0.2));
 assert!(dec256!(0.2) > dec256!(0.1));
 assert!(dec256!(0.1) < dec256!(0.3));
+
+assert!(D256::MAX < D256::INFINITY);
+assert!(D256::INFINITY < D256::NAN);
+
+assert!(D256::NAN != D256::NAN);
 ```
 
-### Rust operators overloads
+## Rust operators overloads
 
 Common numerical operations (such as addition operator `+`, addition assignment operator `+=`, division operator
 `/`, [etc...](https://doc.rust-lang.org/book/appendix-02-operators.html)) are overloaded for `fastnum` decimals, so we

@@ -46,72 +46,72 @@ impl<const N: usize> Num for UnsignedDecimal<N> {
 impl<const N: usize> ToPrimitive for UnsignedDecimal<N> {
     #[inline]
     fn to_isize(&self) -> Option<isize> {
-        self.0.to_isize()
+        self.0.to_isize().ok()
     }
 
     #[inline]
     fn to_i8(&self) -> Option<i8> {
-        self.0.to_i8()
+        self.0.to_i8().ok()
     }
 
     #[inline]
     fn to_i16(&self) -> Option<i16> {
-        self.0.to_i16()
+        self.0.to_i16().ok()
     }
 
     #[inline]
     fn to_i32(&self) -> Option<i32> {
-        self.0.to_i32()
+        self.0.to_i32().ok()
     }
 
     #[inline]
     fn to_i64(&self) -> Option<i64> {
-        self.0.to_i64()
+        self.0.to_i64().ok()
     }
 
     #[inline]
     fn to_i128(&self) -> Option<i128> {
-        self.0.to_i128()
+        self.0.to_i128().ok()
     }
 
     #[inline]
     fn to_usize(&self) -> Option<usize> {
-        self.0.to_usize()
+        self.0.to_usize().ok()
     }
 
     #[inline]
     fn to_u8(&self) -> Option<u8> {
-        self.0.to_u8()
+        self.0.to_u8().ok()
     }
 
     #[inline]
     fn to_u16(&self) -> Option<u16> {
-        self.0.to_u16()
+        self.0.to_u16().ok()
     }
 
     #[inline]
     fn to_u32(&self) -> Option<u32> {
-        self.0.to_u32()
+        self.0.to_u32().ok()
     }
 
     #[inline]
     fn to_u64(&self) -> Option<u64> {
-        self.0.to_u64()
+        self.0.to_u64().ok()
     }
 
     #[inline]
     fn to_u128(&self) -> Option<u128> {
-        self.0.to_u128()
+        self.0.to_u128().ok()
     }
 
     #[inline]
     fn to_f32(&self) -> Option<f32> {
-        self.0.to_f32()
+        Some(self.0.to_f32())
     }
 
     #[inline]
     fn to_f64(&self) -> Option<f64> {
-        self.0.to_f64()
+        Some(self.0.to_f64())
     }
 }
 

@@ -159,6 +159,10 @@ macro_rules! test_impl {
         #[case($dec!(1234506789e15), "1234506789000000000000000")]
         #[case($dec!(1234506789e16), "1234506789e+16")]
         #[case($dec!(13400476439814628800e2502), "13400476439814628800e+2502")]
+        #[case($dec!(10950633712399.557), "10950633712399.557")]
+        #[case($dec!(0.099995), "0.099995")]
+        #[case($dec!(0.9999999), "0.9999999")]
+        #[case($dec!(0.0002394899999500), "0.0002394899999500")]
         fn test_fmt_options_default(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{}", d), expected);
         }
@@ -174,6 +178,10 @@ macro_rules! test_impl {
         #[case($dec!(1e16), "10000000000000000")]
         #[case($dec!(491326e-12), "5E-7")]
         #[case($dec!(0.00003102564500), "0")]
+        #[case($dec!(10950633712399.557), "10950633712400")]
+        #[case($dec!(0.099995), "0")]
+        #[case($dec!(0.9999999), "1")]
+        #[case($dec!(0.0002394899999500), "0")]
         fn test_fmt_options_d0(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.0}", d), expected);
         }
@@ -198,9 +206,16 @@ macro_rules! test_impl {
         #[case($dec!(491326e-12), "4.9E-7")]
         #[case($dec!(1E-10000), "1.0E-10000")]
         #[case($dec!(1e10000), "1e+10000")]
+        #[case($dec!(9999999), "9999999.0")]
         #[case($dec!(1234506789e5), "123450678900000.0")]
         #[case($dec!(1234506789e15), "1234506789000000000000000.0")]
         #[case($dec!(13400476439814628800e2502), "13400476439814628800e+2502")]
+        #[case($dec!(10950633712399.557), "10950633712399.6")]
+        #[case($dec!(0.099995), "0.1")]
+        #[case($dec!(4.099995), "4.1")]
+        #[case($dec!(0.9999999), "1.0")]
+        #[case($dec!(7.9999999), "8.0")]
+        #[case($dec!(0.0002394899999500), "0.0")]
         fn test_fmt_options_d1(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.1}", d), expected);
         }
@@ -217,6 +232,13 @@ macro_rules! test_impl {
         #[case($dec!(10), "10.00")]
         #[case($dec!(0.1), "0.10")]
         #[case($dec!(1e16), "10000000000000000.00")]
+        #[case($dec!(0.999405000), "1.00")]
+        #[case($dec!(10950633712399.557), "10950633712399.56")]
+        #[case($dec!(0.099995), "0.10")]
+        #[case($dec!(3.099995), "3.10")]
+        #[case($dec!(0.9999999), "1.00")]
+        #[case($dec!(5.9999999), "6.00")]
+        #[case($dec!(0.0002394899999500), "0.00")]
         fn test_fmt_options_d2(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.2}", d), expected);
         }
@@ -234,6 +256,12 @@ macro_rules! test_impl {
         #[case($dec!(491326e-12), "4.913E-7")]
         #[case($dec!(1234506789e5), "123450678900000.000")]
         #[case($dec!(1234506789e15), "1234506789000000000000000.000")]
+        #[case($dec!(10950633712399.557), "10950633712399.557")]
+        #[case($dec!(0.099995), "0.100")]
+        #[case($dec!(99.099995), "99.100")]
+        #[case($dec!(0.9999999), "1.000")]
+        #[case($dec!(999.9999999), "1000.000")]
+        #[case($dec!(0.0002394899999500), "0.000")]
         fn test_fmt_options_d3(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.3}", d), expected);
         }
@@ -248,6 +276,12 @@ macro_rules! test_impl {
         #[case($dec!(1E-10000), "1.0000E-10000")]
         #[case($dec!(1e10000), "1e+10000")]
         #[case($dec!(1234506789e5), "123450678900000.0000")]
+        #[case($dec!(10950633712399.557), "10950633712399.5570")]
+        #[case($dec!(0.0002394899999500), "0.0002")]
+        #[case($dec!(0.099995), "0.1000")]
+        #[case($dec!(99.099995), "99.1000")]
+        #[case($dec!(0.9999999), "1.0000")]
+        #[case($dec!(999.9999999), "1000.0000")]
         fn test_fmt_options_d4(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.4}", d), expected);
         }
@@ -263,12 +297,14 @@ macro_rules! test_impl {
         #[case($dec!(1764031078e-13), "0.00018")]
         #[case($dec!(491326e-12), "4.91326E-7")]
         #[case($dec!(0.00003102564500), "0.00003")]
+        #[case($dec!(0.0002394899999500), "0.00024")]
         fn test_fmt_options_d5(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.5}", d), expected);
         }
 
         #[rstest(::trace)]
         #[case($dec!(491326e-12), "4.913260E-7")]
+        #[case($dec!(0.0002394899999500), "0.000239")]
         fn test_fmt_options_d6(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:.6}", d), expected);
         }
@@ -350,6 +386,7 @@ macro_rules! test_impl {
 
         #[rstest(::trace)]
         #[case($dec!(19073.97235939614856), " 19073.972")]
+        #[case($dec!(9.99), "     9.990")]
         fn test_fmt_options_10d3(#[case] d: $D, #[case] expected: &str) {
             assert_eq!(format!("{:10.3}", d), expected);
         }

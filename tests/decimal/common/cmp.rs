@@ -156,6 +156,11 @@ macro_rules! test_impl {
         #[case($dec!(2), $dec!(0.2e2))]
         #[case($dec!(1e-900), $dec!(1e45))]
         #[case($dec!(1e-900), $dec!(1e+900))]
+        #[case($dec!(35_000), $dec!(192051.716384861040546579908080116424889))]
+        #[case($dec!(35e-80), $dec!(19205.1716384861040546579908080116424889))]
+        #[case($dec!(19205.1716384861040546579908080116424889), $dec!(35_000))]
+        #[case($dec!(192051.716384861040546579908080116424889), $dec!(35e80))]
+        #[case($dec!(35e-80), $dec!(192051.716384861040546579908080116424889))]
         fn test_cmp(#[case] a: $D, #[case] b: $D) {
             #[allow(clippy::eq_op)]
             (assert_eq!(a, a));
@@ -217,6 +222,56 @@ macro_rules! test_impl {
             assert!(a <= b);
             assert!(a >= b);
         }
+
+        #[rstest(::trace)]
+        #[case($D::INFINITY, $D::INFINITY)]
+        fn test_eq_special(#[case] a: $D, #[case] b: $D) {
+             assert_eq!(a, b);
+        }
+
+        #[rstest(::trace)]
+        #[case($D::NAN, $D::NAN)]
+        #[case($D::ONE, $D::NAN)]
+        #[case($D::NAN, $D::ONE)]
+        #[case($D::INFINITY, $D::NAN)]
+        fn test_ne_special(#[case] a: $D, #[case] b: $D) {
+            assert_ne!(a, b);
+        }
+
+        #[rstest(::trace)]
+        #[case($D::ZERO, $D::ONE)]
+        #[case($D::ONE, $D::MAX)]
+        #[case($D::MAX, $D::INFINITY)]
+        #[case($D::INFINITY, $D::NAN)]
+        fn test_cmp_special(#[case] a: $D, #[case] b: $D) {
+            assert!(a < b);
+        }
+
+        #[rstest(::trace)]
+        fn test_sort() {
+            let mut positions = vec![
+                $dec!(2.0),
+                $dec!(4.0),
+                $dec!(1.0),
+                $dec!(5.0),
+                $dec!(3.0),
+                $dec!(3.0),
+                $D::INFINITY,
+                $D::ZERO,
+            ];
+
+            positions.sort_by(|a, b| a.cmp(&b));
+            itertools::assert_equal(positions, vec![
+                $D::ZERO,
+                $dec!(1.0),
+                $dec!(2.0),
+                $dec!(3.0),
+                $dec!(3.0),
+                $dec!(4.0),
+                $dec!(5.0),
+                $D::INFINITY,
+            ]);
+        }
     };
     (UNSIGNED:: 128, $dec: ident, $D: ident, THIS) => {
         super::test_impl!(UNSIGNED:: 128, $dec, $D);
@@ -274,6 +329,67 @@ macro_rules! test_impl {
 
             assert_eq!(a, b);
             assert_eq!(b, a);
+        }
+
+        #[rstest(::trace)]
+        #[case($D::NEG_INFINITY, $D::NEG_INFINITY)]
+        fn test_eq_special_signed(#[case] a: $D, #[case] b: $D) {
+             assert_eq!(a, b);
+        }
+
+        #[rstest(::trace)]
+        #[case($D::NEG_INFINITY, $D::NAN)]
+        fn test_ne_special_signed(#[case] a: $D, #[case] b: $D) {
+            assert_ne!(a, b);
+        }
+
+        #[rstest(::trace)]
+        #[case($D::NEG_INFINITY, $D::MIN)]
+        #[case($D::MIN, $D::ONE.neg())]
+        #[case($D::ONE.neg(), $D::ZERO.neg())]
+        #[case($D::ZERO.neg(), $D::ZERO)]
+        fn test_cmp_special_signed(#[case] a: $D, #[case] b: $D) {
+            assert!(a < b);
+        }
+
+        #[rstest(::trace)]
+        fn test_sort_signed() {
+            let mut positions = vec![
+                $dec!(2.0),
+                $dec!(4.0),
+                $dec!(1.0),
+                $dec!(5.0),
+                $dec!(3.0),
+                $dec!(3.0),
+                $D::NEG_INFINITY,
+                $D::INFINITY,
+                $D::ZERO,
+                $dec!(-1.0),
+                $dec!(-5.0),
+                $dec!(-4.0),
+                $dec!(-2.0),
+                $dec!(-3.0),
+                $D::ZERO.neg(),
+            ];
+
+            positions.sort_by(|a, b| a.cmp(&b));
+            itertools::assert_equal(positions, vec![
+                $D::NEG_INFINITY,
+                $dec!(-5.0),
+                $dec!(-4.0),
+                $dec!(-3.0),
+                $dec!(-2.0),
+                $dec!(-1.0),
+                $D::ZERO.neg(),
+                $D::ZERO,
+                $dec!(1.0),
+                $dec!(2.0),
+                $dec!(3.0),
+                $dec!(3.0),
+                $dec!(4.0),
+                $dec!(5.0),
+                $D::INFINITY,
+            ]);
         }
     };
 }

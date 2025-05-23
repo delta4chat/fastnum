@@ -66,7 +66,7 @@ macro_rules! test_impl {
                 #[case($D::from($Pt::MAX) + $dec!(0.1), $Pt::MAX)]
                 #[case($D::from($Pt::MAX) - $dec!(0.1), $Pt::MAX)]
                 fn [< test_to_ $Pt >](#[case] d: $D, #[case] expected: $Pt) {
-                    assert_eq!(d.[< to_ $Pt>](), Some(expected));
+                    assert_eq!(<$D as ToPrimitive>::[< to_ $Pt>](&d), Some(expected));
                 }
             }
         )*
@@ -84,7 +84,7 @@ macro_rules! test_impl {
                 #[case($D::try_from($Pt::MAX).unwrap() + $dec!(0.1), $Pt::MAX)]
                 #[case($D::try_from($Pt::MAX).unwrap() - $dec!(0.1), $Pt::MAX)]
                 fn [< test_to_ $Pt >](#[case] d: $D, #[case] expected: $Pt) {
-                    assert_eq!(d.[< to_ $Pt>](), Some(expected));
+                    assert_eq!(<$D as ToPrimitive>::[< to_ $Pt>](&d), Some(expected));
                 }
             }
         )*
@@ -103,7 +103,7 @@ macro_rules! test_impl {
                 #[case($D::from($Pt::MAX) - $dec!(0.1), $Pt::MAX)]
                 #[case($D::from($Pt::MAX) - $dec!(1), $Pt::MAX - 1)]
                 fn [< test_to_ $Pt _signed>](#[case] d: $D, #[case] expected: $Pt) {
-                    assert_eq!(d.[< to_ $Pt>](), Some(expected));
+                    assert_eq!(<$D as ToPrimitive>::[< to_ $Pt>](&d), Some(expected));
                 }
 
                 #[rstest(::trace)]
@@ -111,7 +111,7 @@ macro_rules! test_impl {
                 #[case($dec!(-1))]
                 #[case($dec!(-10))]
                 fn [< test_to_ $Pt _signed_negative>](#[case] d: $D) {
-                    assert!(d.[< to_ $Pt>]().is_none());
+                    assert!(<$D as ToPrimitive>::[< to_ $Pt>](&d).is_none());
                 }
             }
         )*
@@ -137,7 +137,7 @@ macro_rules! test_impl {
                 #[case($D::from($Pt::MIN) - $dec!(0.1), $Pt::MIN)]
                 #[case($D::from($Pt::MAX).neg(), $Pt::MIN + 1)]
                 fn [< test_to_ $Pt _signed>](#[case] d: $D, #[case] expected: $Pt) {
-                    assert_eq!(d.[< to_ $Pt>](), Some(expected));
+                    assert_eq!(<$D as ToPrimitive>::[< to_ $Pt>](&d), Some(expected));
                 }
 
                 #[rstest(::trace)]
@@ -147,7 +147,7 @@ macro_rules! test_impl {
                 #[case($D::from($Pt::MIN) - $dec!(1))]
                 #[case($D::from($Pt::MIN) - $dec!(0.5))]
                 fn [< test_to_ $Pt _signed_negative>](#[case] d: $D) {
-                    assert!(d.[< to_ $Pt>]().is_none());
+                    assert!(<$D as ToPrimitive>::[< to_ $Pt>](&d).is_none());
                 }
             }
         )*
@@ -164,7 +164,7 @@ macro_rules! test_impl {
                 #[case($Pt::MAX, $D::from($Pt::MAX))]
                 #[case($Pt::MAX - 1, $D::from($Pt::MAX) - $dec!(1))]
                 fn [< test_from_ $Pt >](#[case] n: $Pt, #[case] expected: $D) {
-                    assert_eq!($D::[< from_ $Pt>](n), Some(expected));
+                    assert_eq!(<$D as FromPrimitive>::[< from_ $Pt>](n), Some(expected));
                 }
             }
         )*
@@ -180,13 +180,13 @@ macro_rules! test_impl {
                 #[case($Pt::MAX, $D::try_from($Pt::MAX).unwrap())]
                 #[case($Pt::MAX - 1, $D::try_from($Pt::MAX).unwrap() - $dec!(1))]
                 fn [< test_from_ $Pt >](#[case] n: $Pt, #[case] expected: $D) {
-                    assert_eq!($D::[< from_ $Pt>](n), Some(expected));
+                    assert_eq!(<$D as FromPrimitive>::[< from_ $Pt>](n), Some(expected));
                 }
 
                 #[rstest(::trace)]
                 #[case($Pt::MIN)]
                 fn [< test_from_ $Pt _negative>](#[case] n: $Pt) {
-                    assert!($D::[< from_ $Pt>](n).is_none());
+                    assert!(<$D as FromPrimitive>::[< from_ $Pt>](n).is_none());
                 }
             }
         )*
@@ -202,7 +202,7 @@ macro_rules! test_impl {
                 #[case($Pt::MAX, $D::from($Pt::MAX))]
                 #[case($Pt::MAX - 1, $D::from($Pt::MAX) - $dec!(1))]
                 fn [< test_from_ $Pt >](#[case] n: $Pt, #[case] expected: $D) {
-                    assert_eq!($D::[< from_ $Pt>](n), Some(expected));
+                    assert_eq!(<$D as FromPrimitive>::[< from_ $Pt>](n), Some(expected));
                 }
             }
         )*
@@ -223,7 +223,7 @@ macro_rules! test_impl {
                 #[case($Pt::MAX, $D::from($Pt::MAX))]
                 #[case($Pt::MAX - 1, $D::from($Pt::MAX) - $dec!(1))]
                 fn [< test_from_ $Pt >](#[case] n: $Pt, #[case] expected: $D) {
-                    assert_eq!($D::[< from_ $Pt>](n), Some(expected));
+                    assert_eq!(<$D as FromPrimitive>::[< from_ $Pt>](n), Some(expected));
                 }
             }
         )*

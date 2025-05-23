@@ -10,12 +10,6 @@ use crate::decimal::{
 impl<const N: usize> Display for Decimal<N> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        if self.is_nan() {
-            return write!(f, "NaN");
-        } else if self.is_infinite() {
-            return write!(f, "{}Inf", self.sign());
-        }
-
         use Notation::*;
         match self.ctx.notation() {
             Unspecified => {

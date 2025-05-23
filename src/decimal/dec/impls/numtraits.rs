@@ -4,9 +4,7 @@ mod float_core;
 mod from_primitive;
 mod to_primitive;
 
-use num_traits::{
-    ConstOne, ConstZero, FromPrimitive, Num, NumCast, One, Signed, ToPrimitive, Zero,
-};
+use num_traits::{ConstOne, ConstZero, Num, NumCast, One, Signed, ToPrimitive, Zero};
 
 use crate::decimal::{Context, Decimal, ParseError};
 
@@ -83,6 +81,6 @@ impl<const N: usize> Signed for Decimal<N> {
 impl<const N: usize> NumCast for Decimal<N> {
     #[inline]
     fn from<T: ToPrimitive>(n: T) -> Option<Self> {
-        T::to_f64(&n).and_then(Self::from_f64)
+        T::to_f64(&n).map(Self::from_f64)
     }
 }

@@ -1,6 +1,7 @@
 use crate::decimal::{
     dec::{
         convert::to_f64,
+        intrinsics::Intrinsics,
         math::{add::add, mul::mul, sub::sub},
         parse::from_f64,
         scale,
@@ -37,7 +38,9 @@ pub(crate) const fn recip<const N: usize>(d: D<N>) -> D<N> {
 
     let mut result_next;
 
-    while result.is_ok() {
+    let mut i = 1;
+
+    while result.is_ok() && i < Intrinsics::<N>::SERIES_MAX_ITERATIONS {
         result_next = add(result, mul(result, sub(D::ONE, mul(result, d))));
 
         if result.eq(&result_next) {
@@ -45,6 +48,7 @@ pub(crate) const fn recip<const N: usize>(d: D<N>) -> D<N> {
         }
 
         result = result_next;
+        i += 1;
     }
 
     extend_scale_to(scale::reduce(result), scale).raise_signals(

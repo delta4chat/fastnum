@@ -1265,6 +1265,61 @@ impl<const N: usize> UnsignedDecimal<N> {
     pub fn to_engineering_notation(&self) -> String {
         self.0.to_engineering_notation()
     }
+
+    /// Converts the given unsigned decimal to a signed decimal number.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fastnum::*;
+    ///
+    /// let d = udec256!(1.2345);
+    ///
+    /// assert_eq!(d.to_signed(), dec256!(1.2345));
+    /// ```
+    #[must_use = doc::must_use_op!()]
+    #[inline]
+    pub const fn to_signed(self) -> Decimal<N> {
+        self.0
+    }
+
+    /// Try converts from [Decimal] to [UnsignedDecimal].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fastnum::*;
+    ///
+    /// assert_eq!(UD256::try_from_signed(dec256!(1.2345)), Ok(udec256!(1.2345)));
+    /// assert!(UD256::try_from_signed(dec256!(-1.2345)).is_err());
+    /// ```
+    #[inline]
+    pub const fn try_from_signed(d: Decimal<N>) -> Result<Self, DecimalError> {
+        if d.is_negative() {
+            return Err(DecimalError::Invalid);
+        }
+        Ok(Self::new(d))
+    }
+
+    /// Transmute the given n-bits unsigned decimal number to m-bits unsigned
+    /// decimal number.
+    #[doc = doc::decimal_operation_panics!("transmute operation")]
+    /// # Examples
+    ///
+    /// ```
+    /// use fastnum::*;
+    ///
+    /// let d = udec256!(1.2345);
+    ///
+    /// assert_eq!(d.transmute(), udec128!(1.2345));
+    /// assert_eq!(d.transmute(), udec512!(1.2345));
+    /// ```
+    #[must_use = doc::must_use_op!()]
+    #[track_caller]
+    #[inline]
+    pub const fn transmute<const M: usize>(self) -> UnsignedDecimal<M> {
+        UnsignedDecimal::new(self.0.transmute())
+    }
 }
 
 #[doc(hidden)]
@@ -1276,12 +1331,11 @@ impl<const N: usize> UnsignedDecimal<N> {
     }
 
     #[inline]
-    pub(crate) const fn from_signed(mut dec: Decimal<N>) -> Self {
-        if dec.is_negative() {
-            dec = dec.signaling_nan().check();
+    pub(crate) const fn from_signed(d: Decimal<N>) -> Self {
+        match Self::try_from_signed(d) {
+            Ok(ud) => ud,
+            Err(_) => Self::new(Decimal::SIGNALING_NAN.check()),
         }
-
-        Self::new(dec)
     }
 
     #[inline]
