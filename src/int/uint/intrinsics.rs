@@ -58,5 +58,7 @@ pub struct Intrinsics<const N: usize>;
 
 impl<const N: usize> Intrinsics<N> {
     pub const MAX_POWER_OF_TEN: u32 = (POWER + 1) * (N as u32);
+
+    #[allow(long_running_const_eval)]
     pub const POWERS_OF_TEN: PowersOf10<N> = PowersOf10::new();
 }

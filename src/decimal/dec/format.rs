@@ -101,7 +101,7 @@ pub(crate) fn format(
         // non-scientific notation
         format_dotless_exponential(digits, scale, sign, f, "e")
     } else {
-        format_full_scale(digits, scale, sign, f)
+        format_full_scale(false, digits, scale, sign, f)
     }
 }
 
@@ -130,6 +130,7 @@ fn format_dotless_exponential(
 }
 
 pub(crate) fn format_full_scale(
+    plain: bool,
     digits: String,
     scale: i16,
     sign: Sign,
@@ -140,7 +141,7 @@ pub(crate) fn format_full_scale(
 
     if scale <= 0 {
         // formatting an integer value (add trailing zeros to the right)
-        zero_right_pad_integer_ascii_digits(&mut digits, &mut exp, f.precision());
+        zero_right_pad_integer_ascii_digits(plain, &mut digits, &mut exp, f.precision());
     } else {
         let scale = scale as u64;
         // no-precision behaves the same as precision matching scale (i.e. no padding or
@@ -179,6 +180,7 @@ pub(crate) fn format_full_scale(
 ///
 /// Exponent is set to zero if zeros were added
 fn zero_right_pad_integer_ascii_digits(
+    plain: bool,
     digits: &mut Vec<u8>,
     exp: &mut i128,
     precision: Option<usize>,
@@ -193,33 +195,46 @@ fn zero_right_pad_integer_ascii_digits(
             return;
         }
     };
-    let total_additional_zeros = trailing_zero_count.saturating_add(precision.unwrap_or(0));
-    if total_additional_zeros > (FMT_MAX_INTEGER_PADDING as usize) {
-        return;
+
+    if ! plain { 
+        let total_additional_zeros = trailing_zero_count.saturating_add(precision.unwrap_or(0));
+        if total_additional_zeros > (FMT_MAX_INTEGER_PADDING as usize) {
+            return;
+        }
     }
+
+    let digits_len = digits.len();
 
     // requested 'prec' digits of precision after decimal point
     match precision {
-        None if trailing_zero_count > 20 => {}
-        None | Some(0) => {
-            digits.resize(digits.len() + trailing_zero_count, b'0');
-            *exp = 0;
-        }
         Some(prec) => {
-            digits.resize(digits.len() + trailing_zero_count, b'0');
-            digits.push(b'.');
-            digits.resize(digits.len() + prec, b'0');
+            digits.resize(digits_len + trailing_zero_count, b'0');
+            if prec > 0 {
+                digits.push(b'.');
+                digits.resize(digits_len + prec, b'0');
+            }
             *exp = 0;
+        },
+        _ => {
+            if plain || trailing_zero_count < 20 {
+                digits.resize(digits_len + trailing_zero_count, b'0');
+                *exp = 0;
+            }
         }
     }
 }
 
 fn trim_ascii_digits(digits: &mut Vec<u8>, scale: u64, sign: Sign, prec: u64, exp: &mut i128) {
-    debug_assert!(scale < digits.len() as u64);
+    let mut digits_len = digits.len();
+
     // there are both integer and fractional digits
-    let mut integer_digit_count = (digits.len() as u64 - scale)
-        .to_usize()
-        .expect("Number of digits exceeds maximum usize");
+    let mut integer_digit_count = {
+        let digits_len = digits_len as u64;
+        debug_assert!(scale < digits_len);
+            (digits_len - scale)
+            .to_usize()
+            .expect("Number of digits exceeds maximum usize")
+    };
 
     if prec < scale {
         let prec = prec.to_usize().expect("Precision exceeds maximum usize");
@@ -232,13 +247,14 @@ fn trim_ascii_digits(digits: &mut Vec<u8>, scale: u64, sign: Sign, prec: u64, ex
 
     if prec != 0 {
         digits.insert(integer_digit_count, b'.');
+        digits_len = digits.len();
     }
 
     if scale < prec {
         let trailing_zero_count = (prec - scale).to_usize().expect("Too Big");
 
         // precision required beyond scale
-        digits.resize(digits.len() + trailing_zero_count, b'0');
+        digits.resize(digits_len + trailing_zero_count, b'0');
     }
 }
 

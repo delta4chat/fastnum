@@ -52,6 +52,8 @@ autocfg = "1"
 default = ["std"]
 std = []
 
+more-types = []
+
 numtraits = ["num-traits", "bnum/numtraits"]
 
 rand = ["dep:rand"]

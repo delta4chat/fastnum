@@ -10,32 +10,43 @@ use crate::decimal::{
 impl<const N: usize> Display for Decimal<N> {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        if self.is_nan() {
+            return write!(f, "NaN");
+        } else if self.is_infinite() {
+            return write!(f, "{}Inf", self.sign());
+        }
+
+        let plain;
+
         use Notation::*;
         match self.ctx.notation() {
             Unspecified => {
-                format::format(
+                return format::format(
                     self.ctx,
                     self.digits.to_str_radix(10),
                     self.cb.get_scale(),
                     self.sign(),
                     f,
-                )
+                );
             },
             Scientific => {
-                self.write_scientific_notation(f)
+                return self.write_scientific_notation(f);
             },
             FullScale => {
-                format::format_full_scale(
-                    self.digits.to_str_radix(10),
-                    self.cb.get_scale(),
-                    self.sign(),
-                    f,
-                )
+                plain = false;
             },
             Plain => {
-                todo!("TODO to_plain_string");
+                plain = true;
             }
         }
+
+        format::format_full_scale(
+            plain,
+            self.digits.to_str_radix(10),
+            self.cb.get_scale(),
+            self.sign(),
+            f,
+        )
     }
 }
 
