@@ -231,9 +231,8 @@ fn trim_ascii_digits(digits: &mut Vec<u8>, scale: u64, sign: Sign, prec: u64, ex
     let mut integer_digit_count = {
         let digits_len = digits_len as u64;
         debug_assert!(scale < digits_len);
-            (digits_len - scale)
-            .to_usize()
-            .expect("Number of digits exceeds maximum usize")
+
+        (digits_len - scale).to_usize().expect("Number of digits exceeds maximum usize")
     };
 
     if prec < scale {
